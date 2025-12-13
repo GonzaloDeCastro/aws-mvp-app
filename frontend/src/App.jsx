@@ -6,6 +6,7 @@ import LoginPage from "./pages/LoginPage";
 import ProductsPage from "./pages/ProductsPage";
 import QuoteDetailPage from "./pages/QuoteDetailPage";
 import NotFoundPage from "./pages/NotFoundPage";
+import CustomersPage from "./pages/CustomersPage";
 
 export default function App() {
   return (
@@ -17,6 +18,7 @@ export default function App() {
         <Route path="/app" element={<AppShell />}>
           <Route path="products" element={<ProductsPage />} />
           <Route path="quotes/:id" element={<QuoteDetailPage />} />
+          <Route path="customers" element={<CustomersPage />} />
           <Route
             path="customers"
             element={<div style={{ padding: 8 }}>Customers (todo)</div>}

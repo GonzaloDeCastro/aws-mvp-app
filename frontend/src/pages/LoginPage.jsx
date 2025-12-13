@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { login } from "../redux/authSlice";
 import { useNavigate } from "react-router-dom";
-import presupuestoLogo from "../assets/presupuesto.png";
+import logoPresuflow from "../assets/logo-presuflow.png";
 
 export default function LoginPage() {
   const dispatch = useDispatch();
@@ -25,14 +25,9 @@ export default function LoginPage() {
     <div style={styles.page}>
       <div style={styles.card}>
         <header style={styles.header}>
-          <img
-            src={presupuestoLogo}
-            alt="Logo"
-            style={{ width: 32, height: 32 }}
-          />
+          <img src={logoPresuflow} alt="Logo" style={{ height: 50 }} />
           <div>
-            <div style={styles.appName}>Presupuestos</div>
-            <div style={styles.subTitle}>Sign in to continue</div>
+            <div style={styles.subTitle}>Inicia sesión para continuar</div>
           </div>
         </header>
 
@@ -56,10 +51,10 @@ export default function LoginPage() {
 
           <button
             style={styles.button}
-            disabled={status === "loading"}
+            disabled={status === "cargando"}
             type="submit"
           >
-            {status === "loading" ? "Signing in..." : "Sign in"}
+            {status === "cargando" ? "Iniciando sesión..." : "iniciar sesión"}
           </button>
 
           {error && <div style={styles.error}>{error}</div>}

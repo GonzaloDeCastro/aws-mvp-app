@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { NavLink } from "react-router-dom";
-import presupuestoLogo from "../assets/presupuesto.png";
+import logoPresuflow from "../assets/logo-presuflow.png";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { logout } from "../redux/authSlice";
@@ -21,12 +21,12 @@ export default function AppLayout({ title, children }) {
     <div style={styles.shell}>
       <aside style={{ ...styles.sidebar, width: collapsed ? 64 : 240 }}>
         <div style={styles.brand}>
-          <img
-            src={presupuestoLogo}
-            alt="Logo"
-            style={{ width: 32, height: 32 }}
-          />
-          {!collapsed && <span style={styles.brandText}>Presupuestos</span>}
+          {!collapsed && (
+            <span style={styles.brandText}>
+              {" "}
+              <img src={logoPresuflow} alt="Logo" style={{ height: 50 }} />
+            </span>
+          )}
         </div>
 
         <nav style={styles.nav}>
