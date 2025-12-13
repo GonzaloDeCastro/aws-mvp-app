@@ -1,14 +1,31 @@
 import { useState } from "react";
 import { NavLink } from "react-router-dom";
+import presupuestoLogo from "../assets/presupuesto.png";
+import { useDispatch, useSelector } from "react-redux";
+import { useNavigate } from "react-router-dom";
+import { logout } from "../redux/authSlice";
 
 export default function AppLayout({ title, children }) {
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
+  const user = useSelector((s) => s.auth.user);
+
+  const onLogout = () => {
+    dispatch(logout());
+    navigate("/login", { replace: true });
+  };
+
   const [collapsed, setCollapsed] = useState(false);
 
   return (
     <div style={styles.shell}>
       <aside style={{ ...styles.sidebar, width: collapsed ? 64 : 240 }}>
         <div style={styles.brand}>
-          <div style={styles.logo} />
+          <img
+            src={presupuestoLogo}
+            alt="Logo"
+            style={{ width: 32, height: 32 }}
+          />
           {!collapsed && <span style={styles.brandText}>Presupuestos</span>}
         </div>
 
@@ -81,6 +98,15 @@ export default function AppLayout({ title, children }) {
 
           <div style={styles.headerRight}>
             <input style={styles.search} placeholder="Search..." />
+
+            {!collapsed && user?.email && (
+              <span style={styles.userEmail}>{user.email}</span>
+            )}
+
+            <button style={styles.secondaryBtn} onClick={onLogout}>
+              Logout
+            </button>
+
             <button style={styles.primaryBtn}>New</button>
           </div>
         </header>
@@ -190,4 +216,14 @@ const styles = {
     fontWeight: 600,
   },
   content: { padding: 4 },
+  userEmail: { fontSize: 12, opacity: 0.85, whiteSpace: "nowrap" },
+  secondaryBtn: {
+    padding: "10px 12px",
+    borderRadius: 12,
+    border: "1px solid rgba(255,255,255,0.12)",
+    background: "rgba(255,255,255,0.04)",
+    color: "#e8eefc",
+    cursor: "pointer",
+    fontWeight: 600,
+  },
 };

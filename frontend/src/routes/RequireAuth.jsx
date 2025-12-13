@@ -1,8 +1,9 @@
 import { Navigate, Outlet } from "react-router-dom";
+import { useSelector } from "react-redux";
 
 export default function RequireAuth() {
-  // TODO: replace with real auth from Redux later
-  const isAuthenticated = true;
+  const token = useSelector((s) => s.auth.token);
+  const isAuthenticated = Boolean(token);
 
   if (!isAuthenticated) return <Navigate to="/login" replace />;
   return <Outlet />;

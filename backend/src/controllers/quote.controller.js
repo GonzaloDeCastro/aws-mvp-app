@@ -4,8 +4,8 @@ import { HttpError } from "../utils/httpError.js";
 export const QuoteController = {
   async getById(req, res, next) {
     try {
-      const companyId = Number(req.headers["x-company-id"]);
-      if (!companyId) throw new HttpError(400, "Missing x-company-id header");
+      const companyId = Number(req.user?.companyId);
+      if (!companyId) throw new HttpError(401, "Unauthorized");
 
       const quoteId = Number(req.params.id);
       if (!quoteId) throw new HttpError(400, "Invalid quote id");

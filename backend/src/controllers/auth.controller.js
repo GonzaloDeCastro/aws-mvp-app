@@ -18,8 +18,8 @@ export const AuthController = {
   }),
 
   login: asyncHandler(async (req, res) => {
-    const { companyId, email, password } = req.validated.body;
-    const data = await authService.login({ companyId, email, password });
+    const { email, password } = req.validated.body;
+    const data = await authService.login({ email, password });
     res.json({ ok: true, data });
   }),
 };

@@ -9,10 +9,8 @@ export const registerSchema = z.object({
     password: z.string().min(8),
   }),
 });
-
 export const loginSchema = z.object({
   body: z.object({
-    companyId: z.coerce.number().int().positive(),
     email: z.string().email(),
     password: z.string().min(1),
   }),

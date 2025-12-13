@@ -23,8 +23,8 @@ export const authService = {
     return { userId };
   },
 
-  async login({ companyId, email, password }) {
-    const user = await UserModel.findByEmail(Number(companyId), email);
+  async login({ email, password }) {
+    const user = await UserModel.findByEmailGlobal(email); // nuevo método
     if (!user || !user.is_active)
       throw new HttpError(401, "Invalid credentials");
 

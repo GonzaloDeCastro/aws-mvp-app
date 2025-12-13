@@ -1,17 +1,11 @@
 import { ProductModel } from "../models/product.model.js";
-
-const badRequest = (message, details = null) => {
-  const err = new Error(message);
-  err.statusCode = 400;
-  err.details = details;
-  return err;
-};
+import { HttpError } from "../utils/httpError.js";
 
 export const ProductController = {
   async list(req, res, next) {
     try {
-      const companyId = Number(req.headers["x-company-id"]);
-      if (!companyId) throw badRequest("Missing x-company-id header");
+      const companyId = Number(req.user?.companyId);
+      if (!companyId) throw new HttpError(401, "Unauthorized");
 
       const rows = await ProductModel.listByCompany(companyId);
       res.json({ ok: true, data: rows });
@@ -22,18 +16,14 @@ export const ProductController = {
 
   async getById(req, res, next) {
     try {
-      const companyId = Number(req.headers["x-company-id"]);
-      if (!companyId) throw badRequest("Missing x-company-id header");
+      const companyId = Number(req.user?.companyId);
+      if (!companyId) throw new HttpError(401, "Unauthorized");
 
       const productId = Number(req.params.id);
-      if (!productId) throw badRequest("Invalid product id");
+      if (!productId) throw new HttpError(400, "Invalid product id");
 
       const row = await ProductModel.getById({ companyId, productId });
-      if (!row) {
-        const err = new Error("Product not found");
-        err.statusCode = 404;
-        throw err;
-      }
+      if (!row) throw new HttpError(404, "Product not found");
 
       res.json({ ok: true, data: row });
     } catch (e) {
@@ -43,8 +33,8 @@ export const ProductController = {
 
   async create(req, res, next) {
     try {
-      const companyId = Number(req.headers["x-company-id"]);
-      if (!companyId) throw badRequest("Missing x-company-id header");
+      const companyId = Number(req.user?.companyId);
+      if (!companyId) throw new HttpError(401, "Unauthorized");
 
       const {
         sku = null,
@@ -56,9 +46,10 @@ export const ProductController = {
         currency = "USD",
       } = req.body;
 
-      if (!name) throw badRequest("name is required");
-      if (Number(price) < 0) throw badRequest("price must be >= 0");
-      if (Number(stockQty) < 0) throw badRequest("stockQty must be >= 0");
+      if (!name) throw new HttpError(400, "name is required");
+      if (Number(price) < 0) throw new HttpError(400, "price must be >= 0");
+      if (Number(stockQty) < 0)
+        throw new HttpError(400, "stockQty must be >= 0");
 
       const id = await ProductModel.create({
         companyId,
@@ -79,11 +70,11 @@ export const ProductController = {
 
   async update(req, res, next) {
     try {
-      const companyId = Number(req.headers["x-company-id"]);
-      if (!companyId) throw badRequest("Missing x-company-id header");
+      const companyId = Number(req.user?.companyId);
+      if (!companyId) throw new HttpError(401, "Unauthorized");
 
       const productId = Number(req.params.id);
-      if (!productId) throw badRequest("Invalid product id");
+      if (!productId) throw new HttpError(400, "Invalid product id");
 
       const {
         sku = null,
@@ -96,9 +87,10 @@ export const ProductController = {
         isActive = 1,
       } = req.body;
 
-      if (!name) throw badRequest("name is required");
-      if (Number(price) < 0) throw badRequest("price must be >= 0");
-      if (Number(stockQty) < 0) throw badRequest("stockQty must be >= 0");
+      if (!name) throw new HttpError(400, "name is required");
+      if (Number(price) < 0) throw new HttpError(400, "price must be >= 0");
+      if (Number(stockQty) < 0)
+        throw new HttpError(400, "stockQty must be >= 0");
 
       const affected = await ProductModel.update({
         companyId,
@@ -113,11 +105,7 @@ export const ProductController = {
         isActive: Number(isActive) ? 1 : 0,
       });
 
-      if (!affected) {
-        const err = new Error("Product not found");
-        err.statusCode = 404;
-        throw err;
-      }
+      if (!affected) throw new HttpError(404, "Product not found");
 
       res.json({ ok: true });
     } catch (e) {
@@ -127,18 +115,14 @@ export const ProductController = {
 
   async remove(req, res, next) {
     try {
-      const companyId = Number(req.headers["x-company-id"]);
-      if (!companyId) throw badRequest("Missing x-company-id header");
+      const companyId = Number(req.user?.companyId);
+      if (!companyId) throw new HttpError(401, "Unauthorized");
 
       const productId = Number(req.params.id);
-      if (!productId) throw badRequest("Invalid product id");
+      if (!productId) throw new HttpError(400, "Invalid product id");
 
       const affected = await ProductModel.remove({ companyId, productId });
-      if (!affected) {
-        const err = new Error("Product not found");
-        err.statusCode = 404;
-        throw err;
-      }
+      if (!affected) throw new HttpError(404, "Product not found");
 
       res.json({ ok: true });
     } catch (e) {
