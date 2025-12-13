@@ -1,9 +1,11 @@
 import { asyncHandler } from "../utils/asyncHandler.js";
+import { authService } from "../services/auth.service.js";
 
 export const AuthController = {
   register: asyncHandler(async (req, res) => {
     const { companyId, firstName, lastName, email, password } =
       req.validated.body;
+
     const data = await authService.register({
       companyId,
       firstName,
@@ -11,6 +13,7 @@ export const AuthController = {
       email,
       password,
     });
+
     res.status(201).json({ ok: true, data });
   }),
 
