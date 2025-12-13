@@ -1,51 +1,25 @@
-import { useEffect, useState } from "react";
-import { apiGet } from "../api";
+import { useEffect } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { fetchProducts } from "../redux/productsSlice";
 
 export default function ProductsPage() {
-  const [products, setProducts] = useState([]);
-  const [status, setStatus] = useState({ loading: true, error: "" });
+  const dispatch = useDispatch();
+  const { items, status, error } = useSelector((s) => s.products);
 
   useEffect(() => {
-    let alive = true;
+    if (status === "idle") dispatch(fetchProducts());
+  }, [dispatch, status]);
 
-    async function load() {
-      try {
-        setStatus({ loading: true, error: "" });
-        const json = await apiGet("/products");
-        if (!alive) return;
-        setProducts(json.data ?? []);
-        setStatus({ loading: false, error: "" });
-      } catch (e) {
-        if (!alive) return;
-        setStatus({
-          loading: false,
-          error: e.message || "Error loading products",
-        });
-      }
-    }
-
-    load();
-    return () => {
-      alive = false;
-    };
-  }, []);
-
-  if (status.loading) return <div style={{ padding: 20 }}>Loading...</div>;
-  if (status.error)
-    return <div style={{ padding: 20, color: "crimson" }}>{status.error}</div>;
+  if (status === "loading") return <div>Loading...</div>;
+  if (status === "failed")
+    return <div style={{ color: "crimson" }}>{error}</div>;
 
   return (
-    <div style={{ padding: 20 }}>
-      <h1>Products</h1>
-
+    <div>
       <table
         border="1"
         cellPadding="8"
-        style={{
-          fontSize: 14,
-          borderCollapse: "collapse",
-          width: "100%",
-        }}
+        style={{ borderCollapse: "collapse", width: "100%", fontSize: 14 }}
       >
         <thead>
           <tr>
@@ -58,9 +32,8 @@ export default function ProductsPage() {
             <th>Currency</th>
           </tr>
         </thead>
-
         <tbody>
-          {products.map((p) => (
+          {items.map((p) => (
             <tr key={p.id}>
               <td>{p.id}</td>
               <td>{p.sku || "-"}</td>

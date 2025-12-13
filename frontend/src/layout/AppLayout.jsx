@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { NavLink } from "react-router-dom";
 
 export default function AppLayout({ title, children }) {
   const [collapsed, setCollapsed] = useState(false);
@@ -12,18 +13,53 @@ export default function AppLayout({ title, children }) {
         </div>
 
         <nav style={styles.nav}>
-          <button style={styles.navItem} title="Products">
+          <NavLink
+            to="/app/products"
+            style={({ isActive }) => ({
+              ...styles.navItem,
+              border: isActive
+                ? "1px solid rgba(120,160,255,0.6)"
+                : styles.navItem.border,
+              background: isActive
+                ? "rgba(120,160,255,0.12)"
+                : styles.navItem.background,
+            })}
+          >
             <span style={styles.navIcon}>📦</span>
             {!collapsed && <span>Products</span>}
-          </button>
-          <button style={styles.navItem} title="Customers">
-            <span style={styles.navIcon}>👤</span>
-            {!collapsed && <span>Customers</span>}
-          </button>
-          <button style={styles.navItem} title="Quotes">
+          </NavLink>
+
+          <NavLink
+            to="/app/quotes/2"
+            style={({ isActive }) => ({
+              ...styles.navItem,
+              border: isActive
+                ? "1px solid rgba(120,160,255,0.6)"
+                : styles.navItem.border,
+              background: isActive
+                ? "rgba(120,160,255,0.12)"
+                : styles.navItem.background,
+            })}
+          >
             <span style={styles.navIcon}>🧾</span>
             {!collapsed && <span>Quotes</span>}
-          </button>
+          </NavLink>
+
+          <NavLink
+            to="/app/customers"
+            style={({ isActive }) => ({
+              ...styles.navItem,
+              border: isActive
+                ? "1px solid rgba(120,160,255,0.6)"
+                : styles.navItem.border,
+              background: isActive
+                ? "rgba(120,160,255,0.12)"
+                : styles.navItem.background,
+            })}
+          >
+            <span style={styles.navIcon}>👤</span>
+            {!collapsed && <span>Customers</span>}
+          </NavLink>
         </nav>
 
         <div style={styles.sidebarFooter}>
@@ -58,11 +94,12 @@ export default function AppLayout({ title, children }) {
 const styles = {
   shell: {
     display: "flex",
-    minHeight: "100vh",
+    height: "100vh",
     background: "#0b1220",
     color: "#e8eefc",
     fontFamily: "system-ui, -apple-system, Segoe UI, Roboto, Arial",
   },
+
   sidebar: {
     borderRight: "1px solid rgba(255,255,255,0.08)",
     padding: 12,
@@ -94,6 +131,7 @@ const styles = {
     color: "inherit",
     cursor: "pointer",
     textAlign: "left",
+    textDecoration: "none",
   },
   navIcon: { width: 24, display: "inline-flex", justifyContent: "center" },
   sidebarFooter: {
@@ -115,7 +153,10 @@ const styles = {
     display: "flex",
     flexDirection: "column",
     gap: 12,
+    minHeight: 0, // clave para evitar overflow fantasma
+    overflow: "auto", // scroll solo dentro del main si hace falta
   },
+
   header: {
     display: "flex",
     alignItems: "center",
