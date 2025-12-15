@@ -2,6 +2,11 @@ import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { apiPost } from "../api";
 import { fetchCompany } from "../redux/companySlice";
+import Card from "../components/ui/Card";
+import { PrimaryButton } from "../components/ui/Button";
+import Label from "../components/ui/Label";
+import Toolbar, { ToolbarTitle } from "../components/ui/Toolbar";
+import { InfoAlert, ErrorAlert } from "../components/ui/Alert";
 
 export default function CompanyPage() {
   const dispatch = useDispatch();
@@ -10,6 +15,7 @@ export default function CompanyPage() {
   const [uploading, setUploading] = useState(false);
   const [preview, setPreview] = useState(null);
   const [base64, setBase64] = useState(null);
+  const [uploadError, setUploadError] = useState("");
 
   useEffect(() => {
     if (status === "idle") {
@@ -19,7 +25,39 @@ export default function CompanyPage() {
 
   const onFileChange = (e) => {
     const file = e.target.files?.[0];
-    if (!file) return;
+    if (!file) {
+      setUploadError("");
+      setPreview(null);
+      setBase64(null);
+      return;
+    }
+
+    // Validar tamaño del archivo (máximo 2MB)
+    const MAX_SIZE = 2 * 1024 * 1024; // 2MB en bytes
+    if (file.size > MAX_SIZE) {
+      setUploadError(
+        `El archivo es demasiado grande. Tamaño máximo: 2MB. Tu archivo: ${(
+          file.size /
+          1024 /
+          1024
+        ).toFixed(2)}MB`
+      );
+      setPreview(null);
+      setBase64(null);
+      e.target.value = ""; // Limpiar el input
+      return;
+    }
+
+    // Validar tipo de archivo
+    if (!file.type.startsWith("image/")) {
+      setUploadError("Por favor selecciona un archivo de imagen válido");
+      setPreview(null);
+      setBase64(null);
+      e.target.value = "";
+      return;
+    }
+
+    setUploadError("");
 
     const reader = new FileReader();
     reader.onload = () => {
@@ -31,6 +69,13 @@ export default function CompanyPage() {
         setBase64(pureBase64);
       }
     };
+    reader.onerror = () => {
+      setUploadError(
+        "Error al leer el archivo. Por favor intenta con otro archivo."
+      );
+      setPreview(null);
+      setBase64(null);
+    };
     reader.readAsDataURL(file);
   };
 
@@ -38,13 +83,23 @@ export default function CompanyPage() {
     if (!base64) return;
     try {
       setUploading(true);
+      setUploadError("");
       await apiPost("/company/logo", { logo: base64 });
       setUploading(false);
       setBase64(null);
+      setPreview(null);
       dispatch(fetchCompany());
     } catch (e) {
       console.error(e);
       setUploading(false);
+      const errorMessage =
+        e.message?.includes("too large") ||
+        e.message?.includes("tamaño") ||
+        e.message?.includes("size")
+          ? "El archivo es demasiado grande. Por favor selecciona una imagen más pequeña (máximo 2MB)."
+          : e.message ||
+            "Error al guardar el logo. Por favor intenta nuevamente.";
+      setUploadError(errorMessage);
     }
   };
 
@@ -55,130 +110,71 @@ export default function CompanyPage() {
     : null;
 
   return (
-    <div style={{ display: "grid", gap: 12 }}>
-      <div style={styles.toolbar}>
-        <div>
-          <div style={styles.kicker}>Configuración</div>
-          <h2 style={styles.h2}>Compañía</h2>
-        </div>
-      </div>
+    <div className="grid gap-3">
+      <Toolbar>
+        <ToolbarTitle kicker="Configuración" title="Compañía" />
+      </Toolbar>
 
       {status === "loading" && (
-        <div style={styles.infoBox}>Cargando datos de la compañía...</div>
+        <InfoAlert>Cargando datos de la compañía...</InfoAlert>
       )}
-      {error && <div style={styles.errorBox}>{error}</div>}
+      {error && <ErrorAlert>{error}</ErrorAlert>}
 
-      <div style={styles.card}>
-        <div style={styles.grid}>
+      <Card>
+        <div className="grid grid-cols-1 gap-3 mb-3">
           <div>
-            <label style={styles.label}>Nombre</label>
-            <div style={styles.readonly}>{company?.name || "-"}</div>
+            <Label>Nombre</Label>
+            <div className="px-3 py-2.5 rounded-xl border border-white/12 bg-[rgba(0,0,0,0.22)] text-[#e8eefc] text-sm">
+              {company?.name || "-"}
+            </div>
           </div>
 
           <div>
-            <label style={styles.label}>Email</label>
-            <div style={styles.readonly}>{company?.email || "-"}</div>
+            <Label>Email</Label>
+            <div className="px-3 py-2.5 rounded-xl border border-white/12 bg-[rgba(0,0,0,0.22)] text-[#e8eefc] text-sm">
+              {company?.email || "-"}
+            </div>
           </div>
 
           <div>
-            <label style={styles.label}>Logo actual</label>
-            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+            <Label>Logo actual</Label>
+            <div className="flex items-center gap-3">
               {effectiveLogo ? (
                 <img
                   src={effectiveLogo}
                   alt="Logo"
-                  style={{ height: 64, objectFit: "contain", borderRadius: 8 }}
+                  className="h-16 object-contain rounded-lg"
                 />
               ) : (
-                <div style={styles.readonly}>Sin logo</div>
+                <div className="px-3 py-2.5 rounded-xl border border-white/12 bg-[rgba(0,0,0,0.22)] text-[#e8eefc] text-sm">
+                  Sin logo
+                </div>
               )}
             </div>
           </div>
 
           <div>
-            <label style={styles.label}>Subir nuevo logo</label>
+            <Label>Subir nuevo logo</Label>
             <input
               type="file"
               accept="image/*"
               onChange={onFileChange}
-              style={{ marginTop: 4 }}
+              className="mt-1 text-xs"
             />
+            {uploadError && (
+              <ErrorAlert className="mt-2 text-xs py-2">
+                {uploadError}
+              </ErrorAlert>
+            )}
           </div>
         </div>
 
-        <div style={styles.footerRow}>
-          <button
-            style={styles.primaryBtn}
-            disabled={!base64 || uploading}
-            onClick={onSave}
-          >
+        <div className="flex justify-end">
+          <PrimaryButton disabled={!base64 || uploading} onClick={onSave}>
             {uploading ? "Guardando..." : "Guardar logo"}
-          </button>
+          </PrimaryButton>
         </div>
-      </div>
+      </Card>
     </div>
   );
 }
-
-const styles = {
-  toolbar: {
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "space-between",
-    padding: 16,
-    borderRadius: 18,
-    border: "1px solid rgba(255,255,255,0.08)",
-    background: "rgba(255,255,255,0.03)",
-  },
-  kicker: { fontSize: 11, opacity: 0.7 },
-  h2: { margin: 0, fontSize: 18 },
-  card: {
-    borderRadius: 18,
-    border: "1px solid rgba(255,255,255,0.08)",
-    background: "rgba(255,255,255,0.03)",
-    padding: 16,
-  },
-  grid: {
-    display: "grid",
-    gridTemplateColumns: "1fr",
-    gap: 12,
-    marginBottom: 12,
-  },
-  label: { fontSize: 12, opacity: 0.8, marginBottom: 4 },
-  readonly: {
-    padding: "10px 12px",
-    borderRadius: 12,
-    border: "1px solid rgba(255,255,255,0.12)",
-    background: "rgba(0,0,0,0.22)",
-    color: "#e8eefc",
-    fontSize: 13,
-  },
-  footerRow: {
-    display: "flex",
-    justifyContent: "flex-end",
-    marginTop: 8,
-  },
-  primaryBtn: {
-    padding: "10px 12px",
-    borderRadius: 12,
-    border: "1px solid rgba(255,255,255,0.12)",
-    background: "rgba(120,160,255,0.22)",
-    color: "#e8eefc",
-    cursor: "pointer",
-    fontWeight: 700,
-    fontSize: 13,
-  },
-  infoBox: {
-    padding: 12,
-    borderRadius: 14,
-    border: "1px solid rgba(255,255,255,0.08)",
-    background: "rgba(0,0,0,0.18)",
-  },
-  errorBox: {
-    padding: 12,
-    borderRadius: 14,
-    border: "1px solid rgba(255,80,80,0.25)",
-    background: "rgba(255,80,80,0.08)",
-    color: "#ffd4d4",
-  },
-};

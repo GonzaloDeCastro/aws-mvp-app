@@ -1,6 +1,24 @@
 import { useEffect, useMemo, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { createProduct, fetchProducts } from "../redux/productsSlice";
+import Modal from "../components/ui/Modal";
+import { PrimaryButton, SecondaryButton } from "../components/ui/Button";
+import Input from "../components/ui/Input";
+import Label from "../components/ui/Label";
+import Select from "../components/ui/Select";
+import Toolbar, {
+  ToolbarTitle,
+  ToolbarActions,
+} from "../components/ui/Toolbar";
+import Table, {
+  TableHeader,
+  TableHeaderCell,
+  TableBody,
+  TableRow,
+  TableCell,
+} from "../components/ui/Table";
+import SearchInput from "../components/ui/SearchInput";
+import { InfoAlert, ErrorAlert } from "../components/ui/Alert";
 
 function NewProductModal({ open, onClose, onSubmit, loading }) {
   const initialForm = {
@@ -20,93 +38,76 @@ function NewProductModal({ open, onClose, onSubmit, loading }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
 
-  if (!open) return null;
-
   const set = (k) => (e) => {
     const value = e.target.value;
     setForm((v) => ({ ...v, [k]: value }));
   };
 
   return (
-    <div style={styles.modalOverlay} onClick={onClose}>
-      <div style={styles.modal} onClick={(e) => e.stopPropagation()}>
-        <div style={styles.modalHeader}>
-          <div style={{ fontWeight: 700 }}>Nuevo producto</div>
-          <button style={styles.iconBtn} onClick={onClose}>
-            ✕
-          </button>
-        </div>
-
-        <div style={styles.formGrid}>
-          <label style={styles.label}>Nombre *</label>
-          <input
-            style={styles.input}
-            value={form.name}
-            onChange={set("name")}
-          />
-
-          <label style={styles.label}>SKU</label>
-          <input style={styles.input} value={form.sku} onChange={set("sku")} />
-
-          <label style={styles.label}>Marca</label>
-          <input
-            style={styles.input}
-            value={form.brand}
-            onChange={set("brand")}
-          />
-
-          <label style={styles.label}>Descripción</label>
-          <textarea
-            style={{ ...styles.input, minHeight: 50, resize: "vertical" }}
-            value={form.description}
-            onChange={set("description")}
-          />
-
-          <label style={styles.label}>Cantidad en stock</label>
-          <input
-            style={styles.input}
-            type="number"
-            min="0"
-            value={form.stockQty}
-            onChange={set("stockQty")}
-          />
-
-          <label style={styles.label}>Precio</label>
-          <input
-            style={styles.input}
-            type="number"
-            min="0"
-            step="0.01"
-            value={form.price}
-            onChange={set("price")}
-          />
-
-          <label style={styles.label}>Moneda</label>
-          <select
-            style={styles.input}
-            value={form.currency}
-            onChange={set("currency")}
-          >
-            <option value="USD">USD</option>
-            <option value="ARS">ARS</option>
-            <option value="EUR">EUR</option>
-          </select>
-        </div>
-
-        <div style={styles.modalFooter}>
-          <button style={styles.secondaryBtn} onClick={onClose}>
-            Cancelar
-          </button>
-          <button
-            style={styles.primaryBtn}
-            disabled={loading || !form.name.trim()}
-            onClick={() => onSubmit(form)}
-          >
-            {loading ? "Creando..." : "Crear"}
-          </button>
-        </div>
+    <Modal open={open} onClose={onClose}>
+      <div className="flex items-center justify-between p-1 mb-1">
+        <div className="font-bold">Nuevo producto</div>
+        <button
+          type="button"
+          className="border border-white/20 bg-white/[0.06] text-[#e8eefc] rounded-lg px-2.5 py-1.5 cursor-pointer"
+          onClick={onClose}
+        >
+          ✕
+        </button>
       </div>
-    </div>
+
+      <div className="grid grid-cols-1 gap-2 p-2">
+        <Label>Nombre *</Label>
+        <Input value={form.name} onChange={set("name")} />
+
+        <Label>SKU</Label>
+        <Input value={form.sku} onChange={set("sku")} />
+
+        <Label>Marca</Label>
+        <Input value={form.brand} onChange={set("brand")} />
+
+        <Label>Descripción</Label>
+        <textarea
+          className="rounded-xl border border-white/12 bg-[rgba(0,0,0,0.22)] px-3 py-2.5 text-[#e8eefc] outline-none min-h-[50px] resize-y placeholder:text-white/50"
+          value={form.description}
+          onChange={set("description")}
+        />
+
+        <Label>Cantidad en stock</Label>
+        <Input
+          type="number"
+          min="0"
+          value={form.stockQty}
+          onChange={set("stockQty")}
+        />
+
+        <Label>Precio</Label>
+        <Input
+          type="number"
+          min="0"
+          step="0.01"
+          value={form.price}
+          onChange={set("price")}
+        />
+
+        <Label>Moneda</Label>
+        <Select value={form.currency} onChange={set("currency")}>
+          <option value="ARS">ARS</option>
+          <option value="USD">USD</option>
+          <option value="EUR">EUR</option>
+        </Select>
+      </div>
+
+      <div className="flex justify-end gap-2.5 p-2">
+        <SecondaryButton onClick={onClose}>Cancelar</SecondaryButton>
+        <PrimaryButton
+          disabled={loading || !form.name.trim()}
+          onClick={() => onSubmit(form)}
+        >
+          {loading ? "Creando..." : "Crear"}
+        </PrimaryButton>
+      </div>
+    </Modal>
   );
 }
 
@@ -155,68 +156,55 @@ export default function ProductsPage() {
   };
 
   return (
-    <div style={{ display: "grid", gap: 12 }}>
-      <div style={styles.toolbar}>
-        <div>
-          <div style={styles.kicker}>Catálogo</div>
-          <h2 style={styles.h2}>Productos</h2>
-        </div>
-
-        <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-          <input
-            style={styles.searchInput}
+    <div className="grid gap-3">
+      <Toolbar>
+        <ToolbarTitle kicker="Catálogo" title="Productos" />
+        <ToolbarActions>
+          <SearchInput
             placeholder="Buscar por nombre, SKU o marca..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
-          <button style={styles.primaryBtn} onClick={() => setOpen(true)}>
+          <PrimaryButton onClick={() => setOpen(true)}>
             Nuevo producto
-          </button>
-        </div>
-      </div>
+          </PrimaryButton>
+        </ToolbarActions>
+      </Toolbar>
 
-      {status === "loading" && (
-        <div style={styles.infoBox}>Cargando productos...</div>
-      )}
-      {error && <div style={styles.errorBox}>{error}</div>}
+      {status === "loading" && <InfoAlert>Cargando productos...</InfoAlert>}
+      {error && <ErrorAlert>{error}</ErrorAlert>}
 
-      <div style={styles.card}>
-        <table style={styles.table}>
-          <thead>
-            <tr>
-              <th style={styles.th}>ID</th>
-              <th style={styles.th}>SKU</th>
-              <th style={styles.th}>Nombre</th>
-              <th style={styles.th}>Marca</th>
-              <th style={styles.th}>Stock</th>
-              <th style={styles.th}>Precio</th>
-              <th style={styles.th}>Moneda</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filteredItems.map((p) => (
-              <tr key={p.id}>
-                <td style={styles.td}>{p.id}</td>
-                <td style={styles.td}>{p.sku || "-"}</td>
-                <td style={styles.td}>{p.name}</td>
-                <td style={styles.td}>{p.brand || "-"}</td>
-                <td style={styles.td}>{p.stock_qty}</td>
-                <td style={styles.td}>{p.price}</td>
-                <td style={styles.td}>{p.currency}</td>
-              </tr>
-            ))}
-            {!filteredItems.length && status === "succeeded" && (
-              <tr>
-                <td style={styles.td} colSpan={7}>
-                  No hay productos aún.
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
+      <Table>
+        <TableHeader>
+          <TableHeaderCell>ID</TableHeaderCell>
+          <TableHeaderCell>SKU</TableHeaderCell>
+          <TableHeaderCell>Nombre</TableHeaderCell>
+          <TableHeaderCell>Marca</TableHeaderCell>
+          <TableHeaderCell>Stock</TableHeaderCell>
+          <TableHeaderCell>Precio</TableHeaderCell>
+          <TableHeaderCell>Moneda</TableHeaderCell>
+        </TableHeader>
+        <TableBody>
+          {filteredItems.map((p) => (
+            <TableRow key={p.id}>
+              <TableCell>{p.id}</TableCell>
+              <TableCell>{p.sku || "-"}</TableCell>
+              <TableCell>{p.name}</TableCell>
+              <TableCell>{p.brand || "-"}</TableCell>
+              <TableCell>{p.stock_qty}</TableCell>
+              <TableCell>{p.price}</TableCell>
+              <TableCell>{p.currency}</TableCell>
+            </TableRow>
+          ))}
+          {!filteredItems.length && status === "succeeded" && (
+            <TableRow>
+              <TableCell colSpan={7}>No hay productos aún.</TableCell>
+            </TableRow>
+          )}
+        </TableBody>
+      </Table>
 
-      {createError && <div style={styles.errorBox}>{createError}</div>}
+      {createError && <ErrorAlert>{createError}</ErrorAlert>}
 
       <NewProductModal
         open={open}
@@ -227,134 +215,3 @@ export default function ProductsPage() {
     </div>
   );
 }
-
-const styles = {
-  toolbar: {
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "space-between",
-    padding: 16,
-    borderRadius: 18,
-    border: "1px solid rgba(255,255,255,0.08)",
-    background: "rgba(255,255,255,0.03)",
-  },
-  kicker: { fontSize: 11, opacity: 0.7 },
-  h2: { margin: 0, fontSize: 18 },
-
-  card: {
-    borderRadius: 18,
-    border: "1px solid rgba(255,255,255,0.08)",
-    background: "rgba(255,255,255,0.03)",
-    overflow: "hidden",
-  },
-  table: { width: "100%", borderCollapse: "collapse" },
-  th: {
-    textAlign: "left",
-    fontSize: 12,
-    opacity: 0.8,
-    padding: "12px 12px",
-    borderBottom: "1px solid rgba(255,255,255,0.08)",
-  },
-  td: {
-    padding: "12px 12px",
-    borderBottom: "1px solid rgba(255,255,255,0.06)",
-    fontSize: 13,
-  },
-  infoBox: {
-    padding: 12,
-    borderRadius: 14,
-    border: "1px solid rgba(255,255,255,0.08)",
-    background: "rgba(0,0,0,0.18)",
-  },
-  errorBox: {
-    padding: 12,
-    borderRadius: 14,
-    border: "1px solid rgba(255,80,80,0.25)",
-    background: "rgba(255,80,80,0.08)",
-    color: "#ffd4d4",
-  },
-  primaryBtn: {
-    padding: "10px 12px",
-    borderRadius: 12,
-    border: "1px solid rgba(255,255,255,0.12)",
-    background: "rgba(120,160,255,0.22)",
-    color: "#e8eefc",
-    cursor: "pointer",
-    fontWeight: 700,
-    fontSize: 13,
-  },
-  secondaryBtn: {
-    padding: "10px 12px",
-    borderRadius: 12,
-    border: "1px solid rgba(255,255,255,0.12)",
-    background: "rgba(255,255,255,0.06)",
-    color: "#e8eefc",
-    cursor: "pointer",
-    fontWeight: 600,
-    fontSize: 13,
-  },
-  iconBtn: {
-    border: "1px solid rgba(255,255,255,0.10)",
-    background: "rgba(255,255,255,0.06)",
-    color: "#e8eefc",
-    borderRadius: 10,
-    padding: "6px 10px",
-    cursor: "pointer",
-  },
-  modalOverlay: {
-    position: "fixed",
-    inset: 0,
-    background: "rgba(0,0,0,0.55)",
-    display: "grid",
-    placeItems: "center",
-    padding: 16,
-    zIndex: 50,
-  },
-  modal: {
-    width: "100%",
-    maxWidth: 520,
-    borderRadius: 18,
-    border: "1px solid rgba(255,255,255,0.10)",
-    background: "#0b1220",
-    padding: 16,
-    color: "#e8eefc",
-  },
-  modalHeader: {
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "space-between",
-    padding: 4,
-    marginBottom: 4,
-  },
-  formGrid: {
-    display: "grid",
-    gridTemplateColumns: "1fr",
-    gap: 8,
-    padding: 8,
-  },
-  label: { fontSize: 12, opacity: 0.8 },
-  input: {
-    padding: "10px 12px",
-    borderRadius: 12,
-    border: "1px solid rgba(255,255,255,0.12)",
-    background: "rgba(0,0,0,0.22)",
-    color: "#e8eefc",
-    outline: "none",
-  },
-  modalFooter: {
-    display: "flex",
-    justifyContent: "flex-end",
-    gap: 10,
-    padding: 8,
-  },
-  searchInput: {
-    padding: "8px 10px",
-    borderRadius: 10,
-    border: "1px solid rgba(255,255,255,0.18)",
-    background: "rgba(0,0,0,0.22)",
-    color: "#e8eefc",
-    outline: "none",
-    fontSize: 13,
-    minWidth: 220,
-  },
-};

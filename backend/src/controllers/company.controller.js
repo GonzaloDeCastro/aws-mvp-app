@@ -1,7 +1,76 @@
 import { CompanyModel } from "../models/company.model.js";
 import { HttpError } from "../utils/httpError.js";
+import { authService } from "../services/auth.service.js";
+import bcrypt from "bcrypt";
 
 export const CompanyController = {
+  async register(req, res, next) {
+    try {
+      const {
+        name,
+        legalName,
+        taxId,
+        email,
+        phone,
+        address,
+        logo,
+        // User data
+        firstName,
+        lastName,
+        userEmail,
+        password,
+      } = req.body;
+
+      if (!name || !firstName || !lastName || !userEmail || !password) {
+        throw new HttpError(400, "Missing required fields");
+      }
+
+      // Check if user email already exists globally
+      const { UserModel } = await import("../models/user.model.js");
+      const existingUser = await UserModel.findByEmailGlobal(userEmail);
+      if (existingUser) {
+        throw new HttpError(409, "Email already registered");
+      }
+
+      // Create company
+      const logoBuffer =
+        logo && typeof logo === "string" ? Buffer.from(logo, "base64") : null;
+      const companyId = await CompanyModel.create({
+        name,
+        legalName,
+        taxId,
+        email,
+        phone,
+        address,
+        logoBuffer,
+      });
+
+      // Create initial user for the company
+      const passwordHash = await bcrypt.hash(password, 10);
+      const userId = await UserModel.create({
+        companyId,
+        firstName,
+        lastName,
+        email: userEmail,
+        passwordHash,
+      });
+
+      // Login the user automatically
+      const loginData = await authService.login({ email: userEmail, password });
+
+      res.status(201).json({
+        ok: true,
+        data: {
+          companyId,
+          userId,
+          ...loginData,
+        },
+      });
+    } catch (e) {
+      next(e);
+    }
+  },
+
   async me(req, res, next) {
     try {
       const companyId = Number(req.user?.companyId);
@@ -31,6 +100,20 @@ export const CompanyController = {
       }
 
       const logoBuffer = Buffer.from(logo, "base64");
+
+      // Validar tamaño del buffer (máximo 2MB después de decodificar)
+      const MAX_SIZE = 2 * 1024 * 1024; // 2MB
+      if (logoBuffer.length > MAX_SIZE) {
+        throw new HttpError(
+          413,
+          `El archivo es demasiado grande. Tamaño máximo: 2MB. Tamaño actual: ${(
+            logoBuffer.length /
+            1024 /
+            1024
+          ).toFixed(2)}MB`
+        );
+      }
+
       await CompanyModel.updateLogo({ companyId, logoBuffer });
 
       res.json({ ok: true });

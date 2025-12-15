@@ -3,6 +3,7 @@ import RequireAuth from "./routes/RequireAuth";
 import AppShell from "./layout/AppShell";
 
 import LoginPage from "./pages/LoginPage";
+import RegisterPage from "./pages/RegisterPage";
 import ProductsPage from "./pages/ProductsPage";
 import ProductCreatePage from "./pages/ProductCreatePage";
 import QuotesPage from "./pages/QuotesPage";
@@ -18,6 +19,7 @@ export default function App() {
     <Routes>
       <Route path="/" element={<Navigate to="/app/products" replace />} />
       <Route path="/login" element={<LoginPage />} />
+      <Route path="/register" element={<RegisterPage />} />
 
       <Route element={<RequireAuth />}>
         <Route path="/app" element={<AppShell />}>

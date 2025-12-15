@@ -4,6 +4,15 @@ import { fetchCustomers } from "../redux/customersSlice";
 import { fetchProducts } from "../redux/productsSlice";
 import { createQuote } from "../redux/quotesSlice";
 import { useNavigate } from "react-router-dom";
+import Card from "../components/ui/Card";
+import {
+  PrimaryButton,
+  SecondaryButton,
+  DangerButton,
+} from "../components/ui/Button";
+import Input from "../components/ui/Input";
+import Label from "../components/ui/Label";
+import Select from "../components/ui/Select";
 
 export default function QuoteCreatePage() {
   const dispatch = useDispatch();
@@ -92,102 +101,95 @@ export default function QuoteCreatePage() {
     customersStatus === "loading" || productsStatus === "loading";
 
   return (
-    <div style={{ display: "grid", gap: 12 }}>
-      <div style={styles.card}>
-        <div style={styles.headerRow}>
+    <div className="grid gap-3">
+      <Card>
+        <div className="flex justify-between items-center mb-3">
           <div>
-            <div style={styles.kicker}>Presupuestos</div>
-            <h2 style={styles.h2}>Nuevo presupuesto</h2>
+            <div className="text-[11px] opacity-70">Presupuestos</div>
+            <h2 className="m-0 text-lg">Nuevo presupuesto</h2>
           </div>
-          <button
-            style={styles.primaryBtn}
-            onClick={onCreate}
-            disabled={isLoadingLookups}
-          >
+          <PrimaryButton onClick={onCreate} disabled={isLoadingLookups}>
             {isLoadingLookups ? "Cargando..." : "Crear"}
-          </button>
+          </PrimaryButton>
         </div>
 
-        <div style={styles.grid}>
-          <label style={styles.label}>Cliente</label>
-          <select
-            style={styles.input}
+        <div className="grid gap-2">
+          <Label>Cliente</Label>
+          <Select
             value={customerId}
             onChange={(e) => setCustomerId(e.target.value)}
           >
-            <option value="">(No customer)</option>
+            <option value="">(Sin cliente)</option>
             {customers.map((c) => (
               <option key={c.id} value={c.id}>
                 {c.name}
               </option>
             ))}
-          </select>
+          </Select>
 
-          <label style={styles.label}>Moneda</label>
-          <select
-            style={styles.input}
+          <Label>Moneda</Label>
+          <Select
             value={currency}
             onChange={(e) => setCurrency(e.target.value)}
           >
-            <option value="USD">USD</option>
             <option value="ARS">ARS</option>
+            <option value="USD">USD</option>
             <option value="EUR">EUR</option>
-          </select>
+          </Select>
 
-          <label style={styles.label}>Válido hasta</label>
-          <input
-            style={styles.input}
+          <Label>Válido hasta</Label>
+          <Input
             type="date"
             value={validUntil}
             onChange={(e) => setValidUntil(e.target.value)}
           />
 
-          <label style={styles.label}>Notas</label>
+          <Label>Notas</Label>
           <textarea
-            style={{ ...styles.input, minHeight: 90, resize: "vertical" }}
+            className="rounded-xl border border-white/12 bg-[rgba(0,0,0,0.22)] px-3 py-2.5 text-[#e8eefc] outline-none min-h-[90px] resize-y placeholder:text-white/50"
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
             placeholder="Notas opcionales..."
           />
         </div>
-      </div>
+      </Card>
 
-      <div style={styles.card}>
-        <div style={styles.headerRow}>
+      <Card>
+        <div className="flex justify-between items-center mb-3">
           <div>
-            <div style={styles.kicker}>Ítems</div>
-            <h2 style={styles.h2}>Ítems del presupuesto</h2>
+            <div className="text-[11px] opacity-70">Ítems</div>
+            <h2 className="m-0 text-lg">Ítems del presupuesto</h2>
           </div>
-          <button style={styles.secondaryBtn} onClick={addItemRow}>
-            Agregar ítem
-          </button>
+          <SecondaryButton onClick={addItemRow}>Agregar ítem</SecondaryButton>
         </div>
 
-        <div style={{ overflowX: "auto" }}>
-          <table
-            border="1"
-            cellPadding="8"
-            style={{
-              borderCollapse: "collapse",
-              width: "100%",
-              fontSize: 14,
-            }}
-          >
+        <div className="overflow-x-auto">
+          <table className="w-full border-collapse text-sm">
             <thead>
               <tr>
-                <th style={styles.th}>Producto</th>
-                <th style={styles.th}>Cantidad</th>
-                <th style={styles.th}>Precio unitario</th>
-                <th style={styles.th}>Descuento %</th>
-                <th style={styles.th}>Acciones</th>
+                <th className="text-left text-xs opacity-80 py-3 px-3 border-b border-white/8">
+                  Producto
+                </th>
+                <th className="text-left text-xs opacity-80 py-3 px-3 border-b border-white/8">
+                  Cantidad
+                </th>
+                <th className="text-left text-xs opacity-80 py-3 px-3 border-b border-white/8">
+                  Precio unitario
+                </th>
+                <th className="text-left text-xs opacity-80 py-3 px-3 border-b border-white/8">
+                  Descuento %
+                </th>
+                <th className="text-left text-xs opacity-80 py-3 px-3 border-b border-white/8">
+                  Acciones
+                </th>
               </tr>
             </thead>
             <tbody>
               {items.map((it, idx) => (
                 <tr key={idx}>
                   <td>
-                    <select
-                      style={styles.input}
+                    <Select
+                      className="w-full"
                       value={it.productId}
                       onChange={(e) => handleProductChange(idx, e.target.value)}
                     >
@@ -197,11 +199,10 @@ export default function QuoteCreatePage() {
                           {p.name} {p.brand ? `(${p.brand})` : ""}
                         </option>
                       ))}
-                    </select>
+                    </Select>
                   </td>
                   <td>
-                    <input
-                      style={styles.input}
+                    <Input
                       type="number"
                       min="1"
                       value={it.quantity}
@@ -211,8 +212,7 @@ export default function QuoteCreatePage() {
                     />
                   </td>
                   <td>
-                    <input
-                      style={styles.input}
+                    <Input
                       type="number"
                       min="0"
                       step="0.01"
@@ -223,8 +223,7 @@ export default function QuoteCreatePage() {
                     />
                   </td>
                   <td>
-                    <input
-                      style={styles.input}
+                    <Input
                       type="number"
                       min="0"
                       max="100"
@@ -236,81 +235,20 @@ export default function QuoteCreatePage() {
                     />
                   </td>
                   <td>
-                    <button
-                      style={styles.smallDangerBtn}
+                    <DangerButton
                       type="button"
                       onClick={() => removeItemRow(idx)}
                       disabled={items.length === 1}
                     >
                       Eliminar
-                    </button>
+                    </DangerButton>
                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
-      </div>
+      </Card>
     </div>
   );
 }
-
-const styles = {
-  card: {
-    borderRadius: 18,
-    border: "1px solid rgba(255,255,255,0.08)",
-    background: "rgba(255,255,255,0.03)",
-    padding: 16,
-  },
-  headerRow: {
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 12,
-  },
-  kicker: { fontSize: 11, opacity: 0.7 },
-  h2: { margin: 0, fontSize: 18 },
-  grid: { display: "grid", gap: 8 },
-  label: { fontSize: 12, opacity: 0.75 },
-  input: {
-    padding: "10px 12px",
-    borderRadius: 12,
-    border: "1px solid rgba(255,255,255,0.12)",
-    background: "rgba(0,0,0,0.22)",
-    color: "#e8eefc",
-    outline: "none",
-  },
-  primaryBtn: {
-    padding: "10px 12px",
-    borderRadius: 12,
-    border: "1px solid rgba(255,255,255,0.12)",
-    background: "rgba(120,160,255,0.22)",
-    color: "#e8eefc",
-    cursor: "pointer",
-    fontWeight: 700,
-    fontSize: 13,
-  },
-  secondaryBtn: {
-    padding: "8px 10px",
-    borderRadius: 10,
-    border: "1px solid rgba(255,255,255,0.12)",
-    background: "rgba(255,255,255,0.04)",
-    color: "#e8eefc",
-    cursor: "pointer",
-    fontSize: 12,
-  },
-  smallDangerBtn: {
-    padding: "6px 10px",
-    borderRadius: 10,
-    border: "1px solid rgba(255,100,100,0.6)",
-    background: "rgba(255,100,100,0.1)",
-    color: "#ffaaaa",
-    cursor: "pointer",
-    fontSize: 12,
-  },
-  th: {
-    textAlign: "left",
-    fontSize: 12,
-    opacity: 0.8,
-  },
-};

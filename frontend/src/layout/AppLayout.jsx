@@ -28,13 +28,16 @@ export default function AppLayout({ children }) {
   }, [dispatch, companyStatus]);
 
   return (
-    <div style={styles.shell}>
-      <aside style={{ ...styles.sidebar, width: collapsed ? 64 : 240 }}>
-        <div style={styles.brand}>
+    <div className="flex h-screen bg-[#0b1220] text-[#e8eefc] font-[system-ui,-apple-system,'Segoe UI',Roboto,Arial]">
+      <aside
+        className="border-r border-white/10 p-3 flex flex-col gap-3 bg-[#0a1020] transition-[width] duration-150"
+        style={{ width: collapsed ? 64 : 240 }}
+      >
+        <div className="flex items-center justify-center gap-2 py-2">
           {!collapsed && (
             <button
               type="button"
-              style={styles.logoButton}
+              className="p-0 border-none bg-transparent cursor-pointer"
               onClick={() => navigate("/app/company")}
             >
               <img
@@ -44,78 +47,95 @@ export default function AppLayout({ children }) {
                     : logoPresuflow
                 }
                 alt={company?.name || "Logo"}
-                style={{ height: 50, objectFit: "contain" }}
+                className="h-[50px] object-contain"
               />
             </button>
           )}
         </div>
 
-        <nav style={styles.nav}>
+        <nav className="flex flex-col gap-1">
           <NavLink
             to="/app/products"
-            style={({ isActive }) => ({
-              ...styles.navItem,
-              border: isActive
-                ? "1px solid rgba(120,160,255,0.6)"
-                : styles.navItem.border,
-              background: isActive
-                ? "rgba(120,160,255,0.12)"
-                : styles.navItem.background,
-            })}
+            className={({ isActive }) =>
+              [
+                "flex items-center text-sm gap-2 w-full px-3 py-2.5 rounded-xl border cursor-pointer no-underline",
+                "border-white/10 bg-white/[0.03] hover:bg-white/[0.06]",
+                isActive
+                  ? "border-[rgba(120,160,255,0.6)] bg-[rgba(120,160,255,0.12)]"
+                  : "",
+              ]
+                .filter(Boolean)
+                .join(" ")
+            }
           >
-            <span style={styles.navIcon}>📦</span>
+            <span className="w-6 inline-flex justify-center">📦</span>
             {!collapsed && <span>Productos</span>}
           </NavLink>
 
           <NavLink
             to="/app/quotes"
-            style={({ isActive }) => ({
-              ...styles.navItem,
-              border: isActive
-                ? "1px solid rgba(120,160,255,0.6)"
-                : styles.navItem.border,
-              background: isActive
-                ? "rgba(120,160,255,0.12)"
-                : styles.navItem.background,
-            })}
+            className={({ isActive }) =>
+              [
+                "flex items-center text-sm gap-2 w-full px-3 py-2.5 rounded-xl border cursor-pointer no-underline",
+                "border-white/10 bg-white/[0.03] hover:bg-white/[0.06]",
+                isActive
+                  ? "border-[rgba(120,160,255,0.6)] bg-[rgba(120,160,255,0.12)]"
+                  : "",
+              ]
+                .filter(Boolean)
+                .join(" ")
+            }
           >
-            <span style={styles.navIcon}>🧾</span>
+            <span className="w-6 inline-flex justify-center">🧾</span>
             {!collapsed && <span>Presupuestos</span>}
           </NavLink>
 
           <NavLink
             to="/app/customers"
-            style={({ isActive }) => ({
-              ...styles.navItem,
-              border: isActive
-                ? "1px solid rgba(120,160,255,0.6)"
-                : styles.navItem.border,
-              background: isActive
-                ? "rgba(120,160,255,0.12)"
-                : styles.navItem.background,
-            })}
+            className={({ isActive }) =>
+              [
+                "flex items-center text-sm gap-2 w-full px-3 py-2.5 rounded-xl border cursor-pointer no-underline",
+                "border-white/10 bg-white/[0.03] hover:bg-white/[0.06]",
+                isActive
+                  ? "border-[rgba(120,160,255,0.6)] bg-[rgba(120,160,255,0.12)]"
+                  : "",
+              ]
+                .filter(Boolean)
+                .join(" ")
+            }
           >
-            <span style={styles.navIcon}>👤</span>
+            <span className="w-6 inline-flex justify-center">👤</span>
             {!collapsed && <span>Clientes</span>}
           </NavLink>
         </nav>
 
-        <div style={styles.sidebarFooter}>
+        <div className="mt-auto flex flex-col gap-2 items-end">
           {!collapsed && user?.email && (
-            <div style={styles.userRow}>
-              <span style={styles.userEmail}>{user.email}</span>
-              <button style={styles.logoutIconBtn} onClick={onLogout}>
+            <div className="flex items-center gap-2">
+              <span className="text-xs opacity-85 whitespace-nowrap">
+                {user.email}
+              </span>
+              <button
+                type="button"
+                className="rounded-full border border-white/30 bg-white/[0.06] text-[#e8eefc] p-1.5 inline-flex items-center justify-center cursor-pointer"
+                onClick={onLogout}
+              >
                 <CiLogout size={18} />
               </button>
             </div>
           )}
           {collapsed && (
-            <button style={styles.logoutIconCollapsed} onClick={onLogout}>
+            <button
+              type="button"
+              className="rounded-full border border-white/30 bg-white/[0.06] text-[#e8eefc] p-1.5 inline-flex items-center justify-center cursor-pointer"
+              onClick={onLogout}
+            >
               <CiLogout size={20} />
             </button>
           )}
           <button
-            style={styles.collapseBtn}
+            type="button"
+            className="mt-1 px-2.5 py-2 rounded-lg border border-white/20 bg-white/[0.03] cursor-pointer"
             onClick={() => setCollapsed((v) => !v)}
           >
             {collapsed ? "→" : "←"}
@@ -123,161 +143,9 @@ export default function AppLayout({ children }) {
         </div>
       </aside>
 
-      <main style={styles.main}>
-        <section style={styles.content}>{children}</section>
+      <main className="flex-1 p-4 flex flex-col gap-3 min-h-0 overflow-auto">
+        <section className="p-1">{children}</section>
       </main>
     </div>
   );
 }
-
-const styles = {
-  shell: {
-    display: "flex",
-    height: "100vh",
-    background: "#0b1220",
-    color: "#e8eefc",
-    fontFamily: "system-ui, -apple-system, Segoe UI, Roboto, Arial",
-  },
-
-  sidebar: {
-    borderRight: "1px solid rgba(255,255,255,0.08)",
-    padding: 12,
-    display: "flex",
-    flexDirection: "column",
-    gap: 12,
-    background: "#0a1020",
-  },
-  brand: {
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 10,
-    padding: "8px 6px",
-  },
-  logo: {
-    width: 32,
-    height: 32,
-    borderRadius: 10,
-    background:
-      "linear-gradient(135deg, rgba(120,160,255,1), rgba(80,220,200,1))",
-  },
-  brandText: { fontWeight: 700, letterSpacing: 0.3 },
-  logoButton: {
-    padding: 0,
-    border: "none",
-    background: "transparent",
-    cursor: "pointer",
-  },
-  nav: { display: "flex", flexDirection: "column", gap: 6 },
-  navItem: {
-    display: "flex",
-    alignItems: "center",
-    fontSize: 14,
-    gap: 10,
-    width: "100%",
-    padding: "10px 10px",
-    borderRadius: 12,
-    border: "1px solid rgba(255,255,255,0.06)",
-    background: "rgba(255,255,255,0.03)",
-    color: "inherit",
-    cursor: "pointer",
-    textAlign: "left",
-    textDecoration: "none",
-  },
-  navIcon: { width: 24, display: "inline-flex", justifyContent: "center" },
-  sidebarFooter: {
-    marginTop: "auto",
-    display: "flex",
-    flexDirection: "column",
-    gap: 8,
-    alignItems: "flex-end",
-  },
-  collapseBtn: {
-    padding: "8px 10px",
-    borderRadius: 10,
-    border: "1px solid rgba(255,255,255,0.08)",
-    background: "rgba(255,255,255,0.03)",
-    color: "inherit",
-    cursor: "pointer",
-  },
-  main: {
-    flex: 1,
-    padding: 18,
-    display: "flex",
-    flexDirection: "column",
-    gap: 12,
-    minHeight: 0, // clave para evitar overflow fantasma
-    overflow: "auto", // scroll solo dentro del main si hace falta
-  },
-
-  header: {
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "space-between",
-    padding: 16,
-    borderRadius: 18,
-    border: "1px solid rgba(255,255,255,0.08)",
-    background: "rgba(255,255,255,0.03)",
-  },
-
-  kicker: { fontSize: 11, opacity: 0.7 },
-
-  title: { margin: 0, fontSize: 20 },
-  headerRight: { display: "flex", alignItems: "center", gap: 10 },
-  search: {
-    width: 240,
-    padding: "10px 12px",
-    borderRadius: 12,
-    border: "1px solid rgba(255,255,255,0.12)",
-    background: "rgba(0,0,0,0.2)",
-    color: "#e8eefc",
-    outline: "none",
-  },
-  primaryBtn: {
-    padding: "10px 12px",
-    borderRadius: 12,
-    border: "1px solid rgba(255,255,255,0.12)",
-    background: "rgba(120,160,255,0.2)",
-    color: "#e8eefc",
-    cursor: "pointer",
-    fontWeight: 600,
-  },
-  content: { padding: 4 },
-  userEmail: { fontSize: 12, opacity: 0.85, whiteSpace: "nowrap" },
-  secondaryBtn: {
-    padding: "10px 12px",
-    borderRadius: 12,
-    border: "1px solid rgba(255,255,255,0.12)",
-    background: "rgba(255,255,255,0.04)",
-    color: "#e8eefc",
-    cursor: "pointer",
-    fontWeight: 600,
-  },
-  userRow: {
-    display: "flex",
-    alignItems: "center",
-    gap: 8,
-  },
-  logoutIconBtn: {
-    borderRadius: 999,
-    border: "1px solid rgba(255,255,255,0.2)",
-    background: "rgba(255,255,255,0.04)",
-    color: "#e8eefc",
-    padding: 6,
-    cursor: "pointer",
-    display: "inline-flex",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  logoutIconCollapsed: {
-    borderRadius: 999,
-    border: "1px solid rgba(255,255,255,0.2)",
-    background: "rgba(255,255,255,0.04)",
-    color: "#e8eefc",
-    padding: 6,
-    cursor: "pointer",
-    display: "inline-flex",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-};

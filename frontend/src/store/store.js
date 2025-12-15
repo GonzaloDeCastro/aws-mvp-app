@@ -4,6 +4,7 @@ import productsReducer from "../redux/productsSlice";
 import quotesReducer from "../redux/quotesSlice";
 import customersReducer from "../redux/customersSlice";
 import companyReducer from "../redux/companySlice";
+import companyRegisterReducer from "../redux/companyRegisterSlice";
 
 export const store = configureStore({
   reducer: {
@@ -12,5 +13,6 @@ export const store = configureStore({
     quotes: quotesReducer,
     customers: customersReducer,
     company: companyReducer,
+    companyRegister: companyRegisterReducer,
   },
 });

@@ -4,6 +4,15 @@ import { fetchQuoteById } from "../redux/quotesSlice";
 import { useParams } from "react-router-dom";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
+import Card from "../components/ui/Card";
+import { SecondaryButton } from "../components/ui/Button";
+import Table, {
+  TableHeader,
+  TableHeaderCell,
+  TableBody,
+  TableRow,
+  TableCell,
+} from "../components/ui/Table";
 
 export default function QuoteDetailPage() {
   const { id } = useParams();
@@ -18,9 +27,9 @@ export default function QuoteDetailPage() {
     if (status === "idle") dispatch(fetchQuoteById(quoteId));
   }, [dispatch, quoteId, status]);
 
-  if (status === "loading") return <div>Cargando presupuesto…</div>;
-  if (status === "failed")
-    return <div style={{ color: "crimson" }}>{error}</div>;
+  if (status === "loading")
+    return <div className="text-[#e8eefc]">Cargando presupuesto…</div>;
+  if (status === "failed") return <div className="text-[crimson]">{error}</div>;
   if (!quote) return null;
 
   const total = quote.items.reduce((acc, i) => acc + Number(i.line_total), 0);
@@ -121,86 +130,62 @@ export default function QuoteDetailPage() {
   };
 
   return (
-    <div>
-      <section
-        style={{
-          marginBottom: 24,
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-        }}
-      >
-        <div>
-          <h2>Presupuesto #{quote.quoteNumber}</h2>
-          <div>Estado: {quote.status}</div>
+    <div className="grid gap-6">
+      <Card>
+        <div className="flex justify-between items-center mb-6">
           <div>
-            Válido hasta: {new Date(quote.validUntil).toLocaleDateString()}
+            <h2 className="m-0 mb-1">Presupuesto #{quote.quoteNumber}</h2>
+            <div className="text-sm opacity-80">Estado: {quote.status}</div>
+            <div className="text-sm opacity-80">
+              Válido hasta: {new Date(quote.validUntil).toLocaleDateString()}
+            </div>
+          </div>
+          <SecondaryButton onClick={exportPdf}>Exportar PDF</SecondaryButton>
+        </div>
+
+        <div className="flex gap-10 mb-6">
+          <div>
+            <h4 className="m-0 mb-2 text-sm font-semibold opacity-90">
+              Compañía
+            </h4>
+            <div className="text-sm">{quote.company.name}</div>
+            <div className="text-sm">{quote.company.address}</div>
+            <div className="text-sm">{quote.company.email}</div>
+          </div>
+
+          <div>
+            <h4 className="m-0 mb-2 text-sm font-semibold opacity-90">
+              Cliente
+            </h4>
+            <div className="text-sm">{quote.customer?.name}</div>
+            <div className="text-sm">{quote.customer?.address}</div>
+            <div className="text-sm">{quote.customer?.email}</div>
           </div>
         </div>
-        <button
-          onClick={exportPdf}
-          style={{
-            padding: "8px 12px",
-            borderRadius: 8,
-            border: "1px solid rgba(255,255,255,0.2)",
-            background: "rgba(255,255,255,0.05)",
-            color: "#e8eefc",
-            cursor: "pointer",
-          }}
-        >
-          Exportar PDF
-        </button>
-      </section>
 
-      <section style={{ display: "flex", gap: 40, marginBottom: 24 }}>
-        <div>
-          <h4>Compañía</h4>
-          <div>{quote.company.name}</div>
-          <div>{quote.company.address}</div>
-          <div>{quote.company.email}</div>
+        <Table>
+          <TableHeader>
+            <TableHeaderCell>Ítem</TableHeaderCell>
+            <TableHeaderCell>Cant.</TableHeaderCell>
+            <TableHeaderCell>Precio unitario</TableHeaderCell>
+            <TableHeaderCell>Total</TableHeaderCell>
+          </TableHeader>
+          <TableBody>
+            {quote.items.map((i) => (
+              <TableRow key={i.id}>
+                <TableCell>{i.item_name}</TableCell>
+                <TableCell>{i.quantity}</TableCell>
+                <TableCell>{i.unit_price}</TableCell>
+                <TableCell>{i.line_total}</TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+
+        <div className="text-right font-semibold mt-4">
+          Total: {total} {quote.currency}
         </div>
-
-        <div>
-          <h4>Cliente</h4>
-          <div>{quote.customer?.name}</div>
-          <div>{quote.customer?.address}</div>
-          <div>{quote.customer?.email}</div>
-        </div>
-      </section>
-
-      <table
-        border="1"
-        cellPadding="8"
-        style={{
-          borderCollapse: "collapse",
-          width: "100%",
-          marginBottom: 16,
-          fontSize: 14,
-        }}
-      >
-        <thead>
-          <tr>
-            <th>Ítem</th>
-            <th>Cant.</th>
-            <th>Precio unitario</th>
-            <th>Total</th>
-          </tr>
-        </thead>
-        <tbody>
-          {quote.items.map((i) => (
-            <tr key={i.id}>
-              <td>{i.item_name}</td>
-              <td>{i.quantity}</td>
-              <td>{i.unit_price}</td>
-              <td>{i.line_total}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-
-      <div style={{ textAlign: "right", fontWeight: 600 }}>
-        Total: {total} {quote.currency}
-      </div>
+      </Card>
     </div>
   );
 }

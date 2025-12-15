@@ -1,6 +1,23 @@
 import { useEffect, useMemo, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { createCustomer, fetchCustomers } from "../redux/customersSlice";
+import Modal from "../components/ui/Modal";
+import { PrimaryButton, SecondaryButton } from "../components/ui/Button";
+import Input from "../components/ui/Input";
+import Label from "../components/ui/Label";
+import Toolbar, {
+  ToolbarTitle,
+  ToolbarActions,
+} from "../components/ui/Toolbar";
+import Table, {
+  TableHeader,
+  TableHeaderCell,
+  TableBody,
+  TableRow,
+  TableCell,
+} from "../components/ui/Table";
+import SearchInput from "../components/ui/SearchInput";
+import { InfoAlert, ErrorAlert } from "../components/ui/Alert";
 
 function NewCustomerModal({ open, onClose, onSubmit, loading }) {
   const initialForm = {
@@ -18,71 +35,48 @@ function NewCustomerModal({ open, onClose, onSubmit, loading }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
 
-  if (!open) return null;
-
   const set = (k) => (e) => setForm((v) => ({ ...v, [k]: e.target.value }));
 
   return (
-    <div style={styles.modalOverlay} onClick={onClose}>
-      <div style={styles.modal} onClick={(e) => e.stopPropagation()}>
-        <div style={styles.modalHeader}>
-          <div style={{ fontWeight: 700 }}>Nuevo cliente</div>
-          <button style={styles.iconBtn} onClick={onClose}>
-            ✕
-          </button>
-        </div>
-
-        <div style={styles.formGrid}>
-          <label style={styles.label}>Nombre *</label>
-          <input
-            style={styles.input}
-            value={form.name}
-            onChange={set("name")}
-          />
-
-          <label style={styles.label}>Email</label>
-          <input
-            style={styles.input}
-            value={form.email}
-            onChange={set("email")}
-          />
-
-          <label style={styles.label}>Teléfono</label>
-          <input
-            style={styles.input}
-            value={form.phone}
-            onChange={set("phone")}
-          />
-
-          <label style={styles.label}>CUIT/CUIL</label>
-          <input
-            style={styles.input}
-            value={form.taxId}
-            onChange={set("taxId")}
-          />
-
-          <label style={styles.label}>Dirección</label>
-          <input
-            style={styles.input}
-            value={form.address}
-            onChange={set("address")}
-          />
-        </div>
-
-        <div style={styles.modalFooter}>
-          <button style={styles.secondaryBtn} onClick={onClose}>
-            Cancelar
-          </button>
-          <button
-            style={styles.primaryBtn}
-            disabled={loading || !form.name.trim()}
-            onClick={() => onSubmit(form)}
-          >
-            {loading ? "Creando..." : "Crear"}
-          </button>
-        </div>
+    <Modal open={open} onClose={onClose}>
+      <div className="flex items-center justify-between p-1 mb-1">
+        <div className="font-bold">Nuevo cliente</div>
+        <button
+          type="button"
+          className="border border-white/20 bg-white/[0.06] text-[#e8eefc] rounded-lg px-2.5 py-1.5 cursor-pointer"
+          onClick={onClose}
+        >
+          ✕
+        </button>
       </div>
-    </div>
+
+      <div className="grid grid-cols-1 gap-2 p-2">
+        <Label>Nombre *</Label>
+        <Input value={form.name} onChange={set("name")} />
+
+        <Label>Email</Label>
+        <Input value={form.email} onChange={set("email")} />
+
+        <Label>Teléfono</Label>
+        <Input value={form.phone} onChange={set("phone")} />
+
+        <Label>CUIT/CUIL</Label>
+        <Input value={form.taxId} onChange={set("taxId")} />
+
+        <Label>Dirección</Label>
+        <Input value={form.address} onChange={set("address")} />
+      </div>
+
+      <div className="flex justify-end gap-2.5 p-2">
+        <SecondaryButton onClick={onClose}>Cancelar</SecondaryButton>
+        <PrimaryButton
+          disabled={loading || !form.name.trim()}
+          onClick={() => onSubmit(form)}
+        >
+          {loading ? "Creando..." : "Crear"}
+        </PrimaryButton>
+      </div>
+    </Modal>
   );
 }
 
@@ -125,66 +119,53 @@ export default function CustomersPage() {
   };
 
   return (
-    <div style={{ display: "grid", gap: 12 }}>
-      <div style={styles.toolbar}>
-        <div>
-          <div style={styles.kicker}>Directorio</div>
-          <h2 style={styles.h2}>Clientes</h2>
-        </div>
-
-        <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-          <input
-            style={styles.searchInput}
+    <div className="grid gap-3">
+      <Toolbar>
+        <ToolbarTitle kicker="Directorio" title="Clientes" />
+        <ToolbarActions>
+          <SearchInput
             placeholder="Buscar por nombre, email, teléfono..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
-          <button style={styles.primaryBtn} onClick={() => setOpen(true)}>
+          <PrimaryButton onClick={() => setOpen(true)}>
             Nuevo cliente
-          </button>
-        </div>
-      </div>
+          </PrimaryButton>
+        </ToolbarActions>
+      </Toolbar>
 
-      {status === "loading" && (
-        <div style={styles.infoBox}>Cargando clientes...</div>
-      )}
-      {error && <div style={styles.errorBox}>{error}</div>}
+      {status === "loading" && <InfoAlert>Cargando clientes...</InfoAlert>}
+      {error && <ErrorAlert>{error}</ErrorAlert>}
 
-      <div style={styles.card}>
-        <table style={styles.table}>
-          <thead>
-            <tr>
-              <th style={styles.th}>ID</th>
-              <th style={styles.th}>Nombre</th>
-              <th style={styles.th}>Email</th>
-              <th style={styles.th}>Teléfono</th>
-              <th style={styles.th}>CUIT/CUIL</th>
-              <th style={styles.th}>Dirección</th>
-            </tr>
-          </thead>
-          <tbody>
-            {rows.map((c) => (
-              <tr key={c.id}>
-                <td style={styles.td}>{c.id}</td>
-                <td style={styles.td}>{c.name}</td>
-                <td style={styles.td}>{c.email || "-"}</td>
-                <td style={styles.td}>{c.phone || "-"}</td>
-                <td style={styles.td}>{c.tax_id || "-"}</td>
-                <td style={styles.td}>{c.address || "-"}</td>
-              </tr>
-            ))}
-            {!rows.length && status === "succeeded" && (
-              <tr>
-                <td style={styles.td} colSpan={6}>
-                  Todavía no hay clientes.
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
+      <Table>
+        <TableHeader>
+          <TableHeaderCell>ID</TableHeaderCell>
+          <TableHeaderCell>Nombre</TableHeaderCell>
+          <TableHeaderCell>Email</TableHeaderCell>
+          <TableHeaderCell>Teléfono</TableHeaderCell>
+          <TableHeaderCell>CUIT/CUIL</TableHeaderCell>
+          <TableHeaderCell>Dirección</TableHeaderCell>
+        </TableHeader>
+        <TableBody>
+          {rows.map((c) => (
+            <TableRow key={c.id}>
+              <TableCell>{c.id}</TableCell>
+              <TableCell>{c.name}</TableCell>
+              <TableCell>{c.email || "-"}</TableCell>
+              <TableCell>{c.phone || "-"}</TableCell>
+              <TableCell>{c.tax_id || "-"}</TableCell>
+              <TableCell>{c.address || "-"}</TableCell>
+            </TableRow>
+          ))}
+          {!rows.length && status === "succeeded" && (
+            <TableRow>
+              <TableCell colSpan={6}>Todavía no hay clientes.</TableCell>
+            </TableRow>
+          )}
+        </TableBody>
+      </Table>
 
-      {createError && <div style={styles.errorBox}>{createError}</div>}
+      {createError && <ErrorAlert>{createError}</ErrorAlert>}
 
       <NewCustomerModal
         open={open}
@@ -195,135 +176,3 @@ export default function CustomersPage() {
     </div>
   );
 }
-
-const styles = {
-  toolbar: {
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "space-between",
-    padding: 16,
-    borderRadius: 18,
-    border: "1px solid rgba(255,255,255,0.08)",
-    background: "rgba(255,255,255,0.03)",
-  },
-  kicker: { fontSize: 11, opacity: 0.7 },
-  h2: { margin: 0, fontSize: 18 },
-
-  card: {
-    borderRadius: 18,
-    border: "1px solid rgba(255,255,255,0.08)",
-    background: "rgba(255,255,255,0.03)",
-    overflow: "hidden",
-  },
-  table: { width: "100%", borderCollapse: "collapse" },
-  th: {
-    textAlign: "left",
-    fontSize: 12,
-    opacity: 0.8,
-    padding: "12px 12px",
-    borderBottom: "1px solid rgba(255,255,255,0.08)",
-  },
-  td: {
-    padding: "12px 12px",
-    borderBottom: "1px solid rgba(255,255,255,0.06)",
-    fontSize: 13,
-  },
-
-  infoBox: {
-    padding: 12,
-    borderRadius: 14,
-    border: "1px solid rgba(255,255,255,0.08)",
-    background: "rgba(0,0,0,0.18)",
-  },
-  errorBox: {
-    padding: 12,
-    borderRadius: 14,
-    border: "1px solid rgba(255,80,80,0.25)",
-    background: "rgba(255,80,80,0.08)",
-    color: "#ffd4d4",
-  },
-
-  primaryBtn: {
-    padding: "10px 12px",
-    borderRadius: 12,
-    border: "1px solid rgba(255,255,255,0.12)",
-    background: "rgba(120,160,255,0.22)",
-    color: "#e8eefc",
-    cursor: "pointer",
-    fontWeight: 700,
-    fontSize: 13,
-  },
-  secondaryBtn: {
-    padding: "10px 12px",
-    borderRadius: 12,
-    border: "1px solid rgba(255,255,255,0.12)",
-    background: "rgba(255,255,255,0.06)",
-    color: "#e8eefc",
-    cursor: "pointer",
-    fontWeight: 600,
-    fontSize: 13,
-  },
-  iconBtn: {
-    border: "1px solid rgba(255,255,255,0.10)",
-    background: "rgba(255,255,255,0.06)",
-    color: "#e8eefc",
-    borderRadius: 10,
-    padding: "6px 10px",
-    cursor: "pointer",
-  },
-
-  modalOverlay: {
-    position: "fixed",
-    inset: 0,
-    background: "rgba(0,0,0,0.55)",
-    display: "grid",
-    placeItems: "center",
-    padding: 16,
-    zIndex: 50,
-  },
-  modal: {
-    width: "100%",
-    maxWidth: 520,
-    borderRadius: 18,
-    border: "1px solid rgba(255,255,255,0.10)",
-    background: "#0b1220",
-    padding: 14,
-  },
-  modalHeader: {
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "space-between",
-    padding: 8,
-  },
-  formGrid: {
-    display: "grid",
-    gridTemplateColumns: "1fr",
-    gap: 8,
-    padding: 8,
-  },
-  label: { fontSize: 12, opacity: 0.75 },
-  input: {
-    padding: "10px 12px",
-    borderRadius: 12,
-    border: "1px solid rgba(255,255,255,0.12)",
-    background: "rgba(0,0,0,0.22)",
-    color: "#e8eefc",
-    outline: "none",
-  },
-  modalFooter: {
-    display: "flex",
-    justifyContent: "flex-end",
-    gap: 10,
-    padding: 8,
-  },
-  searchInput: {
-    padding: "8px 10px",
-    borderRadius: 10,
-    border: "1px solid rgba(255,255,255,0.18)",
-    background: "rgba(0,0,0,0.22)",
-    color: "#e8eefc",
-    outline: "none",
-    fontSize: 13,
-    minWidth: 220,
-  },
-};
