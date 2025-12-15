@@ -46,8 +46,8 @@ export default function CustomerCreatePage() {
       <div style={styles.card}>
         <div style={styles.headerRow}>
           <div>
-            <div style={styles.kicker}>Customers</div>
-            <h2 style={styles.h2}>New customer</h2>
+            <div style={styles.kicker}>Clientes</div>
+            <h2 style={styles.h2}>Nuevo cliente</h2>
           </div>
           <button
             style={styles.primaryBtn}

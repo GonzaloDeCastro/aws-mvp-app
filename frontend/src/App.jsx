@@ -11,6 +11,7 @@ import NotFoundPage from "./pages/NotFoundPage";
 import CustomersPage from "./pages/CustomersPage";
 import CustomerCreatePage from "./pages/CustomerCreatePage";
 import QuoteCreatePage from "./pages/QuoteCreatePage";
+import CompanyPage from "./pages/CompanyPage";
 
 export default function App() {
   return (
@@ -27,6 +28,7 @@ export default function App() {
           <Route path="quotes/new" element={<QuoteCreatePage />} />
           <Route path="customers" element={<CustomersPage />} />
           <Route path="customers/new" element={<CustomerCreatePage />} />
+          <Route path="company" element={<CompanyPage />} />
         </Route>
       </Route>
 

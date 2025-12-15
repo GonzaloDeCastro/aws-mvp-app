@@ -1,9 +1,9 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { createProduct, fetchProducts } from "../redux/productsSlice";
 
 function NewProductModal({ open, onClose, onSubmit, loading }) {
-  const [form, setForm] = useState({
+  const initialForm = {
     sku: "",
     name: "",
     brand: "",
@@ -11,19 +11,13 @@ function NewProductModal({ open, onClose, onSubmit, loading }) {
     stockQty: 0,
     price: 0,
     currency: "USD",
-  });
+  };
+  const [form, setForm] = useState(initialForm);
 
   useEffect(() => {
     if (!open) return;
-    setForm({
-      sku: "",
-      name: "",
-      brand: "",
-      description: "",
-      stockQty: 0,
-      price: 0,
-      currency: "USD",
-    });
+    setForm(initialForm);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
 
   if (!open) return null;
@@ -63,7 +57,7 @@ function NewProductModal({ open, onClose, onSubmit, loading }) {
 
           <label style={styles.label}>Description</label>
           <textarea
-            style={{ ...styles.input, minHeight: 70, resize: "vertical" }}
+            style={{ ...styles.input, minHeight: 50, resize: "vertical" }}
             value={form.description}
             onChange={set("description")}
           />
@@ -123,10 +117,26 @@ export default function ProductsPage() {
   );
 
   const [open, setOpen] = useState(false);
+  const [search, setSearch] = useState("");
 
   useEffect(() => {
     dispatch(fetchProducts());
   }, [dispatch]);
+
+  const filteredItems = useMemo(() => {
+    const term = search.trim().toLowerCase();
+    if (!term) return items;
+    return items.filter((p) => {
+      const sku = p.sku || "";
+      const name = p.name || "";
+      const brand = p.brand || "";
+      return (
+        sku.toLowerCase().includes(term) ||
+        name.toLowerCase().includes(term) ||
+        brand.toLowerCase().includes(term)
+      );
+    });
+  }, [items, search]);
 
   const onCreate = async (payload) => {
     await dispatch(
@@ -152,9 +162,17 @@ export default function ProductsPage() {
           <h2 style={styles.h2}>Productos</h2>
         </div>
 
-        <button style={styles.primaryBtn} onClick={() => setOpen(true)}>
-          Nuevo producto
-        </button>
+        <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+          <input
+            style={styles.searchInput}
+            placeholder="Buscar por nombre, SKU o marca..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
+          <button style={styles.primaryBtn} onClick={() => setOpen(true)}>
+            Nuevo producto
+          </button>
+        </div>
       </div>
 
       {status === "loading" && (
@@ -176,7 +194,7 @@ export default function ProductsPage() {
             </tr>
           </thead>
           <tbody>
-            {items.map((p) => (
+            {filteredItems.map((p) => (
               <tr key={p.id}>
                 <td style={styles.td}>{p.id}</td>
                 <td style={styles.td}>{p.sku || "-"}</td>
@@ -187,7 +205,7 @@ export default function ProductsPage() {
                 <td style={styles.td}>{p.currency}</td>
               </tr>
             ))}
-            {!items.length && status === "succeeded" && (
+            {!filteredItems.length && status === "succeeded" && (
               <tr>
                 <td style={styles.td} colSpan={7}>
                   No hay productos aún.
@@ -217,53 +235,50 @@ const styles = {
     justifyContent: "space-between",
     padding: 16,
     borderRadius: 18,
-    border: "1px solid rgba(15,23,42,0.06)",
-    background: "#f9fafb",
-    color: "#111827",
+    border: "1px solid rgba(255,255,255,0.08)",
+    background: "rgba(255,255,255,0.03)",
   },
   kicker: { fontSize: 11, opacity: 0.7 },
   h2: { margin: 0, fontSize: 18 },
 
   card: {
     borderRadius: 18,
-    border: "1px solid rgba(15,23,42,0.06)",
-    background: "#ffffff",
+    border: "1px solid rgba(255,255,255,0.08)",
+    background: "rgba(255,255,255,0.03)",
     overflow: "hidden",
-    color: "#111827",
   },
   table: { width: "100%", borderCollapse: "collapse" },
   th: {
     textAlign: "left",
     fontSize: 12,
-    opacity: 0.9,
+    opacity: 0.8,
     padding: "12px 12px",
-    borderBottom: "1px solid rgba(15,23,42,0.08)",
+    borderBottom: "1px solid rgba(255,255,255,0.08)",
   },
   td: {
     padding: "12px 12px",
-    borderBottom: "1px solid rgba(15,23,42,0.06)",
+    borderBottom: "1px solid rgba(255,255,255,0.06)",
     fontSize: 13,
   },
   infoBox: {
     padding: 12,
     borderRadius: 14,
-    border: "1px solid rgba(15,23,42,0.06)",
-    background: "#f9fafb",
-    color: "#111827",
+    border: "1px solid rgba(255,255,255,0.08)",
+    background: "rgba(0,0,0,0.18)",
   },
   errorBox: {
     padding: 12,
     borderRadius: 14,
-    border: "1px solid rgba(220,38,38,0.3)",
-    background: "#fef2f2",
-    color: "#b91c1c",
+    border: "1px solid rgba(255,80,80,0.25)",
+    background: "rgba(255,80,80,0.08)",
+    color: "#ffd4d4",
   },
   primaryBtn: {
     padding: "10px 12px",
     borderRadius: 12,
-    border: "1px solid rgba(59,130,246,0.4)",
-    background: "rgba(59,130,246,0.12)",
-    color: "#1f2937",
+    border: "1px solid rgba(255,255,255,0.12)",
+    background: "rgba(120,160,255,0.22)",
+    color: "#e8eefc",
     cursor: "pointer",
     fontWeight: 700,
     fontSize: 13,
@@ -271,17 +286,17 @@ const styles = {
   secondaryBtn: {
     padding: "10px 12px",
     borderRadius: 12,
-    border: "1px solid rgba(148,163,184,0.7)",
-    background: "#ffffff",
-    color: "#111827",
+    border: "1px solid rgba(255,255,255,0.12)",
+    background: "rgba(255,255,255,0.06)",
+    color: "#e8eefc",
     cursor: "pointer",
     fontWeight: 600,
     fontSize: 13,
   },
   iconBtn: {
-    border: "1px solid rgba(148,163,184,0.7)",
-    background: "#ffffff",
-    color: "#111827",
+    border: "1px solid rgba(255,255,255,0.10)",
+    background: "rgba(255,255,255,0.06)",
+    color: "#e8eefc",
     borderRadius: 10,
     padding: "6px 10px",
     cursor: "pointer",
@@ -289,7 +304,7 @@ const styles = {
   modalOverlay: {
     position: "fixed",
     inset: 0,
-    background: "rgba(15,23,42,0.55)",
+    background: "rgba(0,0,0,0.55)",
     display: "grid",
     placeItems: "center",
     padding: 16,
@@ -299,10 +314,10 @@ const styles = {
     width: "100%",
     maxWidth: 520,
     borderRadius: 18,
-    border: "1px solid rgba(15,23,42,0.12)",
-    background: "#ffffff",
+    border: "1px solid rgba(255,255,255,0.10)",
+    background: "#0b1220",
     padding: 16,
-    color: "#111827",
+    color: "#e8eefc",
   },
   modalHeader: {
     display: "flex",
@@ -321,9 +336,9 @@ const styles = {
   input: {
     padding: "10px 12px",
     borderRadius: 12,
-    border: "1px solid rgba(148,163,184,0.7)",
-    background: "#ffffff",
-    color: "#111827",
+    border: "1px solid rgba(255,255,255,0.12)",
+    background: "rgba(0,0,0,0.22)",
+    color: "#e8eefc",
     outline: "none",
   },
   modalFooter: {
@@ -331,5 +346,15 @@ const styles = {
     justifyContent: "flex-end",
     gap: 10,
     padding: 8,
+  },
+  searchInput: {
+    padding: "8px 10px",
+    borderRadius: 10,
+    border: "1px solid rgba(255,255,255,0.18)",
+    background: "rgba(0,0,0,0.22)",
+    color: "#e8eefc",
+    outline: "none",
+    fontSize: 13,
+    minWidth: 220,
   },
 };

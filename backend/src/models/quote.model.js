@@ -65,6 +65,7 @@ export const QuoteModel = {
         c.email AS company_email,
         c.phone AS company_phone,
         c.address AS company_address,
+        c.logo AS company_logo,
 
         cu.id AS customer_id,
         cu.name AS customer_name,
@@ -121,6 +122,10 @@ export const QuoteModel = {
         email: header.company_email,
         phone: header.company_phone,
         address: header.company_address,
+        logo:
+          header.company_logo && Buffer.isBuffer(header.company_logo)
+            ? header.company_logo.toString("base64")
+            : null,
       },
 
       customer: header.customer_id

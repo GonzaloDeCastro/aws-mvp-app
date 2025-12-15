@@ -25,23 +25,58 @@ export default function QuoteDetailPage() {
 
   const total = quote.items.reduce((acc, i) => acc + Number(i.line_total), 0);
 
-  const exportPdf = () => {
+  const loadImageAsDataUrl = (url) =>
+    new Promise((resolve, reject) => {
+      const img = new Image();
+      img.crossOrigin = "Anonymous";
+      img.onload = function () {
+        const canvas = document.createElement("canvas");
+        canvas.width = img.width;
+        canvas.height = img.height;
+        const ctx = canvas.getContext("2d");
+        ctx.drawImage(img, 0, 0);
+        try {
+          const dataUrl = canvas.toDataURL("image/png");
+          resolve(dataUrl);
+        } catch (e) {
+          reject(e);
+        }
+      };
+      img.onerror = reject;
+      img.src = url;
+    });
+
+  const exportPdf = async () => {
     const doc = new jsPDF();
 
     doc.setFontSize(16);
-    doc.text(`Quote #${quote.quoteNumber}`, 14, 20);
+    let currentY = 20;
+
+    if (quote.company.logo) {
+      try {
+        const imgData = await loadImageAsDataUrl(
+          `data:image/png;base64,${quote.company.logo}`
+        );
+        doc.addImage(imgData, "PNG", 14, 10, 40, 16);
+        currentY = 30;
+      } catch {
+        // ignore logo errors
+      }
+    }
+
+    doc.text(`Quote #${quote.quoteNumber}`, 14, currentY);
 
     doc.setFontSize(11);
-    doc.text(`Status: ${quote.status}`, 14, 28);
+    doc.text(`Status: ${quote.status}`, 14, currentY + 8);
     if (quote.validUntil) {
       doc.text(
         `Valid until: ${new Date(quote.validUntil).toLocaleDateString()}`,
         14,
-        34
+        currentY + 14
       );
     }
 
-    let y = 44;
+    let y = currentY + 24;
     doc.setFontSize(12);
     doc.text("Company", 14, y);
     doc.text("Customer", 110, y);

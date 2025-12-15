@@ -3,17 +3,19 @@ import { useDispatch, useSelector } from "react-redux";
 import { createCustomer, fetchCustomers } from "../redux/customersSlice";
 
 function NewCustomerModal({ open, onClose, onSubmit, loading }) {
-  const [form, setForm] = useState({
+  const initialForm = {
     name: "",
     email: "",
     phone: "",
     taxId: "",
     address: "",
-  });
+  };
+  const [form, setForm] = useState(initialForm);
 
   useEffect(() => {
     if (!open) return;
-    setForm({ name: "", email: "", phone: "", taxId: "", address: "" });
+    setForm(initialForm);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
 
   if (!open) return null;
@@ -24,7 +26,7 @@ function NewCustomerModal({ open, onClose, onSubmit, loading }) {
     <div style={styles.modalOverlay} onClick={onClose}>
       <div style={styles.modal} onClick={(e) => e.stopPropagation()}>
         <div style={styles.modalHeader}>
-          <div style={{ fontWeight: 700 }}>New customer</div>
+          <div style={{ fontWeight: 700 }}>Nuevo cliente</div>
           <button style={styles.iconBtn} onClick={onClose}>
             ✕
           </button>
@@ -91,12 +93,30 @@ export default function CustomersPage() {
   );
 
   const [open, setOpen] = useState(false);
+  const [search, setSearch] = useState("");
 
   useEffect(() => {
     dispatch(fetchCustomers());
   }, [dispatch]);
 
-  const rows = useMemo(() => items, [items]);
+  const rows = useMemo(() => {
+    const term = search.trim().toLowerCase();
+    if (!term) return items;
+    return items.filter((c) => {
+      const name = c.name || "";
+      const email = c.email || "";
+      const phone = c.phone || "";
+      const taxId = c.tax_id || "";
+      const address = c.address || "";
+      return (
+        name.toLowerCase().includes(term) ||
+        email.toLowerCase().includes(term) ||
+        phone.toLowerCase().includes(term) ||
+        taxId.toLowerCase().includes(term) ||
+        address.toLowerCase().includes(term)
+      );
+    });
+  }, [items, search]);
 
   const onCreate = async (payload) => {
     await dispatch(createCustomer(payload)).unwrap();
@@ -108,13 +128,21 @@ export default function CustomersPage() {
     <div style={{ display: "grid", gap: 12 }}>
       <div style={styles.toolbar}>
         <div>
-          <div style={styles.kicker}>Directory</div>
-          <h2 style={styles.h2}>Customers</h2>
+          <div style={styles.kicker}>Directorio</div>
+          <h2 style={styles.h2}>Clientes</h2>
         </div>
 
-        <button style={styles.primaryBtn} onClick={() => setOpen(true)}>
-          New customer
-        </button>
+        <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+          <input
+            style={styles.searchInput}
+            placeholder="Buscar por nombre, email, teléfono..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
+          <button style={styles.primaryBtn} onClick={() => setOpen(true)}>
+            Nuevo cliente
+          </button>
+        </div>
       </div>
 
       {status === "loading" && <div style={styles.infoBox}>Loading...</div>}
@@ -173,55 +201,52 @@ const styles = {
     justifyContent: "space-between",
     padding: 16,
     borderRadius: 18,
-    border: "1px solid rgba(15,23,42,0.06)",
-    background: "#f9fafb",
-    color: "#111827",
+    border: "1px solid rgba(255,255,255,0.08)",
+    background: "rgba(255,255,255,0.03)",
   },
   kicker: { fontSize: 11, opacity: 0.7 },
   h2: { margin: 0, fontSize: 18 },
 
   card: {
     borderRadius: 18,
-    border: "1px solid rgba(15,23,42,0.06)",
-    background: "#ffffff",
+    border: "1px solid rgba(255,255,255,0.08)",
+    background: "rgba(255,255,255,0.03)",
     overflow: "hidden",
-    color: "#111827",
   },
   table: { width: "100%", borderCollapse: "collapse" },
   th: {
     textAlign: "left",
     fontSize: 12,
-    opacity: 0.9,
+    opacity: 0.8,
     padding: "12px 12px",
-    borderBottom: "1px solid rgba(15,23,42,0.08)",
+    borderBottom: "1px solid rgba(255,255,255,0.08)",
   },
   td: {
     padding: "12px 12px",
-    borderBottom: "1px solid rgba(15,23,42,0.06)",
+    borderBottom: "1px solid rgba(255,255,255,0.06)",
     fontSize: 13,
   },
 
   infoBox: {
     padding: 12,
     borderRadius: 14,
-    border: "1px solid rgba(15,23,42,0.06)",
-    background: "#f9fafb",
-    color: "#111827",
+    border: "1px solid rgba(255,255,255,0.08)",
+    background: "rgba(0,0,0,0.18)",
   },
   errorBox: {
     padding: 12,
     borderRadius: 14,
-    border: "1px solid rgba(220,38,38,0.3)",
-    background: "#fef2f2",
-    color: "#b91c1c",
+    border: "1px solid rgba(255,80,80,0.25)",
+    background: "rgba(255,80,80,0.08)",
+    color: "#ffd4d4",
   },
 
   primaryBtn: {
     padding: "10px 12px",
     borderRadius: 12,
-    border: "1px solid rgba(59,130,246,0.4)",
-    background: "rgba(59,130,246,0.12)",
-    color: "#1f2937",
+    border: "1px solid rgba(255,255,255,0.12)",
+    background: "rgba(120,160,255,0.22)",
+    color: "#e8eefc",
     cursor: "pointer",
     fontWeight: 700,
     fontSize: 13,
@@ -229,17 +254,17 @@ const styles = {
   secondaryBtn: {
     padding: "10px 12px",
     borderRadius: 12,
-    border: "1px solid rgba(148,163,184,0.7)",
-    background: "#ffffff",
-    color: "#111827",
+    border: "1px solid rgba(255,255,255,0.12)",
+    background: "rgba(255,255,255,0.06)",
+    color: "#e8eefc",
     cursor: "pointer",
     fontWeight: 600,
     fontSize: 13,
   },
   iconBtn: {
-    border: "1px solid rgba(148,163,184,0.7)",
-    background: "#ffffff",
-    color: "#111827",
+    border: "1px solid rgba(255,255,255,0.10)",
+    background: "rgba(255,255,255,0.06)",
+    color: "#e8eefc",
     borderRadius: 10,
     padding: "6px 10px",
     cursor: "pointer",
@@ -258,8 +283,8 @@ const styles = {
     width: "100%",
     maxWidth: 520,
     borderRadius: 18,
-    border: "1px solid rgba(15,23,42,0.12)",
-    background: "#ffffff",
+    border: "1px solid rgba(255,255,255,0.10)",
+    background: "#0b1220",
     padding: 14,
   },
   modalHeader: {
@@ -278,9 +303,9 @@ const styles = {
   input: {
     padding: "10px 12px",
     borderRadius: 12,
-    border: "1px solid rgba(148,163,184,0.7)",
-    background: "#ffffff",
-    color: "#111827",
+    border: "1px solid rgba(255,255,255,0.12)",
+    background: "rgba(0,0,0,0.22)",
+    color: "#e8eefc",
     outline: "none",
   },
   modalFooter: {
@@ -288,5 +313,15 @@ const styles = {
     justifyContent: "flex-end",
     gap: 10,
     padding: 8,
+  },
+  searchInput: {
+    padding: "8px 10px",
+    borderRadius: 10,
+    border: "1px solid rgba(255,255,255,0.18)",
+    background: "rgba(0,0,0,0.22)",
+    color: "#e8eefc",
+    outline: "none",
+    fontSize: 13,
+    minWidth: 220,
   },
 };
