@@ -37,15 +37,15 @@ export default function LoginPage() {
             style={styles.input}
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            placeholder="you@company.com"
+            placeholder="tú@empresa.com"
           />
 
-          <label style={styles.label}>Password</label>
+          <label style={styles.label}>Contraseña</label>
           <input
             style={styles.input}
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            placeholder="Your password"
+            placeholder="Tu contraseña"
             type="password"
           />
 

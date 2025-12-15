@@ -54,17 +54,17 @@ export default function CustomerCreatePage() {
             onClick={onCreate}
             disabled={disabled}
           >
-            {createStatus === "loading" ? "Creating..." : "Create"}
+            {createStatus === "loading" ? "Creando..." : "Crear"}
           </button>
         </div>
 
         <div style={styles.grid}>
-          <label style={styles.label}>Name *</label>
+          <label style={styles.label}>Nombre *</label>
           <input
             style={styles.input}
             value={form.name}
             onChange={set("name")}
-            placeholder="Customer name"
+            placeholder="Nombre del cliente"
           />
 
           <label style={styles.label}>Email</label>
@@ -72,31 +72,31 @@ export default function CustomerCreatePage() {
             style={styles.input}
             value={form.email}
             onChange={set("email")}
-            placeholder="Optional email"
+            placeholder="Email opcional"
           />
 
-          <label style={styles.label}>Phone</label>
+          <label style={styles.label}>Teléfono</label>
           <input
             style={styles.input}
             value={form.phone}
             onChange={set("phone")}
-            placeholder="Optional phone"
+            placeholder="Teléfono opcional"
           />
 
-          <label style={styles.label}>Tax ID</label>
+          <label style={styles.label}>CUIT/CUIL</label>
           <input
             style={styles.input}
             value={form.taxId}
             onChange={set("taxId")}
-            placeholder="Optional tax ID"
+            placeholder="CUIT/CUIL opcional"
           />
 
-          <label style={styles.label}>Address</label>
+          <label style={styles.label}>Dirección</label>
           <input
             style={styles.input}
             value={form.address}
             onChange={set("address")}
-            placeholder="Optional address"
+            placeholder="Dirección opcional"
           />
         </div>
 

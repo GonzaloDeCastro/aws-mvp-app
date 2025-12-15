@@ -16,7 +16,7 @@ export default function QuoteCreatePage() {
   const productsStatus = useSelector((s) => s.products.status);
 
   const [customerId, setCustomerId] = useState("");
-  const [currency, setCurrency] = useState("USD");
+  const [currency, setCurrency] = useState("ARS");
   const [validUntil, setValidUntil] = useState("");
   const [notes, setNotes] = useState("");
 
@@ -71,7 +71,7 @@ export default function QuoteCreatePage() {
       .filter((it) => it.productId && it.quantity > 0);
 
     if (preparedItems.length === 0) {
-      alert("Please add at least one item with product and quantity.");
+      alert("Agrega al menos un ítem con producto y cantidad.");
       return;
     }
 
@@ -96,20 +96,20 @@ export default function QuoteCreatePage() {
       <div style={styles.card}>
         <div style={styles.headerRow}>
           <div>
-            <div style={styles.kicker}>Quotes</div>
-            <h2 style={styles.h2}>New quote</h2>
+            <div style={styles.kicker}>Presupuestos</div>
+            <h2 style={styles.h2}>Nuevo presupuesto</h2>
           </div>
           <button
             style={styles.primaryBtn}
             onClick={onCreate}
             disabled={isLoadingLookups}
           >
-            {isLoadingLookups ? "Loading..." : "Create"}
+            {isLoadingLookups ? "Cargando..." : "Crear"}
           </button>
         </div>
 
         <div style={styles.grid}>
-          <label style={styles.label}>Customer</label>
+          <label style={styles.label}>Cliente</label>
           <select
             style={styles.input}
             value={customerId}
@@ -123,7 +123,7 @@ export default function QuoteCreatePage() {
             ))}
           </select>
 
-          <label style={styles.label}>Currency</label>
+          <label style={styles.label}>Moneda</label>
           <select
             style={styles.input}
             value={currency}
@@ -134,7 +134,7 @@ export default function QuoteCreatePage() {
             <option value="EUR">EUR</option>
           </select>
 
-          <label style={styles.label}>Valid until</label>
+          <label style={styles.label}>Válido hasta</label>
           <input
             style={styles.input}
             type="date"
@@ -142,12 +142,12 @@ export default function QuoteCreatePage() {
             onChange={(e) => setValidUntil(e.target.value)}
           />
 
-          <label style={styles.label}>Notes</label>
+          <label style={styles.label}>Notas</label>
           <textarea
             style={{ ...styles.input, minHeight: 90, resize: "vertical" }}
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
-            placeholder="Optional notes..."
+            placeholder="Notas opcionales..."
           />
         </div>
       </div>
@@ -155,11 +155,11 @@ export default function QuoteCreatePage() {
       <div style={styles.card}>
         <div style={styles.headerRow}>
           <div>
-            <div style={styles.kicker}>Items</div>
-            <h2 style={styles.h2}>Quote items</h2>
+            <div style={styles.kicker}>Ítems</div>
+            <h2 style={styles.h2}>Ítems del presupuesto</h2>
           </div>
           <button style={styles.secondaryBtn} onClick={addItemRow}>
-            Add item
+            Agregar ítem
           </button>
         </div>
 
@@ -175,11 +175,11 @@ export default function QuoteCreatePage() {
           >
             <thead>
               <tr>
-                <th style={styles.th}>Product</th>
-                <th style={styles.th}>Quantity</th>
-                <th style={styles.th}>Unit price</th>
-                <th style={styles.th}>Discount %</th>
-                <th style={styles.th}>Actions</th>
+                <th style={styles.th}>Producto</th>
+                <th style={styles.th}>Cantidad</th>
+                <th style={styles.th}>Precio unitario</th>
+                <th style={styles.th}>Descuento %</th>
+                <th style={styles.th}>Acciones</th>
               </tr>
             </thead>
             <tbody>
@@ -191,7 +191,7 @@ export default function QuoteCreatePage() {
                       value={it.productId}
                       onChange={(e) => handleProductChange(idx, e.target.value)}
                     >
-                      <option value="">Select product...</option>
+                      <option value="">Selecciona un producto...</option>
                       {products.map((p) => (
                         <option key={p.id} value={p.id}>
                           {p.name} {p.brand ? `(${p.brand})` : ""}
@@ -242,7 +242,7 @@ export default function QuoteCreatePage() {
                       onClick={() => removeItemRow(idx)}
                       disabled={items.length === 1}
                     >
-                      Remove
+                      Eliminar
                     </button>
                   </td>
                 </tr>

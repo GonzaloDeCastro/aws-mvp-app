@@ -16,7 +16,7 @@ export default function ProductCreatePage() {
     description: "",
     stockQty: 0,
     price: 0,
-    currency: "USD",
+    currency: "ARS",
   });
 
   const set = (k) => (e) => {
@@ -33,7 +33,7 @@ export default function ProductCreatePage() {
         description: form.description || null,
         stockQty: Number(form.stockQty) || 0,
         price: Number(form.price) || 0,
-        currency: form.currency || "USD",
+        currency: form.currency || "ARS",
       })
     ).unwrap();
 
@@ -50,25 +50,25 @@ export default function ProductCreatePage() {
       <div style={styles.card}>
         <div style={styles.headerRow}>
           <div>
-            <div style={styles.kicker}>Products</div>
-            <h2 style={styles.h2}>New product</h2>
+            <div style={styles.kicker}>Productos</div>
+            <h2 style={styles.h2}>Nuevo producto</h2>
           </div>
           <button
             style={styles.primaryBtn}
             onClick={onCreate}
             disabled={disabled}
           >
-            {createStatus === "loading" ? "Creating..." : "Create"}
+            {createStatus === "loading" ? "Creando..." : "Crear"}
           </button>
         </div>
 
         <div style={styles.grid}>
-          <label style={styles.label}>Name *</label>
+          <label style={styles.label}>Nombre *</label>
           <input
             style={styles.input}
             value={form.name}
             onChange={set("name")}
-            placeholder="Product name"
+            placeholder="Nombre del producto"
           />
 
           <label style={styles.label}>SKU</label>
@@ -76,26 +76,26 @@ export default function ProductCreatePage() {
             style={styles.input}
             value={form.sku}
             onChange={set("sku")}
-            placeholder="Optional SKU"
+            placeholder="SKU opcional"
           />
 
-          <label style={styles.label}>Brand</label>
+          <label style={styles.label}>Marca</label>
           <input
             style={styles.input}
             value={form.brand}
             onChange={set("brand")}
-            placeholder="Optional brand"
+            placeholder="Marca opcional"
           />
 
-          <label style={styles.label}>Description</label>
+          <label style={styles.label}>Descripción</label>
           <textarea
             style={{ ...styles.input, minHeight: 80, resize: "vertical" }}
             value={form.description}
             onChange={set("description")}
-            placeholder="Optional description"
+            placeholder="Descripción opcional"
           />
 
-          <label style={styles.label}>Stock quantity</label>
+          <label style={styles.label}>Cantidad en stock</label>
           <input
             style={styles.input}
             type="number"
@@ -104,7 +104,7 @@ export default function ProductCreatePage() {
             onChange={set("stockQty")}
           />
 
-          <label style={styles.label}>Price</label>
+          <label style={styles.label}>Precio</label>
           <input
             style={styles.input}
             type="number"
@@ -114,14 +114,14 @@ export default function ProductCreatePage() {
             onChange={set("price")}
           />
 
-          <label style={styles.label}>Currency</label>
+          <label style={styles.label}>Moneda</label>
           <select
             style={styles.input}
             value={form.currency}
             onChange={set("currency")}
           >
-            <option value="USD">USD</option>
             <option value="ARS">ARS</option>
+            <option value="USD">USD</option>
             <option value="EUR">EUR</option>
           </select>
         </div>

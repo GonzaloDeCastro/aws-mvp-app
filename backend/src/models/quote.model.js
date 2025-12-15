@@ -174,7 +174,7 @@ export const QuoteModel = {
           companyId,
           createdByUserId,
           customerId ?? null,
-          currency ?? "USD",
+          currency ?? "ARS",
           validUntil ?? null,
         ]
       );
@@ -237,7 +237,7 @@ export const QuoteModel = {
           p.brand ?? null,
           qty,
           unitPrice,
-          it.currency ?? currency ?? "USD",
+          it.currency ?? currency ?? "ARS",
           discountPct,
           lineTotal,
           Number(it.sortOrder ?? idx + 1),

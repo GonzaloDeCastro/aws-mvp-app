@@ -33,7 +33,7 @@ function NewCustomerModal({ open, onClose, onSubmit, loading }) {
         </div>
 
         <div style={styles.formGrid}>
-          <label style={styles.label}>Name *</label>
+          <label style={styles.label}>Nombre *</label>
           <input
             style={styles.input}
             value={form.name}
@@ -47,21 +47,21 @@ function NewCustomerModal({ open, onClose, onSubmit, loading }) {
             onChange={set("email")}
           />
 
-          <label style={styles.label}>Phone</label>
+          <label style={styles.label}>Teléfono</label>
           <input
             style={styles.input}
             value={form.phone}
             onChange={set("phone")}
           />
 
-          <label style={styles.label}>Tax ID</label>
+          <label style={styles.label}>CUIT/CUIL</label>
           <input
             style={styles.input}
             value={form.taxId}
             onChange={set("taxId")}
           />
 
-          <label style={styles.label}>Address</label>
+          <label style={styles.label}>Dirección</label>
           <input
             style={styles.input}
             value={form.address}
@@ -71,14 +71,14 @@ function NewCustomerModal({ open, onClose, onSubmit, loading }) {
 
         <div style={styles.modalFooter}>
           <button style={styles.secondaryBtn} onClick={onClose}>
-            Cancel
+            Cancelar
           </button>
           <button
             style={styles.primaryBtn}
             disabled={loading || !form.name.trim()}
             onClick={() => onSubmit(form)}
           >
-            {loading ? "Creating..." : "Create"}
+            {loading ? "Creando..." : "Crear"}
           </button>
         </div>
       </div>
@@ -145,7 +145,9 @@ export default function CustomersPage() {
         </div>
       </div>
 
-      {status === "loading" && <div style={styles.infoBox}>Loading...</div>}
+      {status === "loading" && (
+        <div style={styles.infoBox}>Cargando clientes...</div>
+      )}
       {error && <div style={styles.errorBox}>{error}</div>}
 
       <div style={styles.card}>
@@ -153,11 +155,11 @@ export default function CustomersPage() {
           <thead>
             <tr>
               <th style={styles.th}>ID</th>
-              <th style={styles.th}>Name</th>
+              <th style={styles.th}>Nombre</th>
               <th style={styles.th}>Email</th>
-              <th style={styles.th}>Phone</th>
-              <th style={styles.th}>Tax ID</th>
-              <th style={styles.th}>Address</th>
+              <th style={styles.th}>Teléfono</th>
+              <th style={styles.th}>CUIT/CUIL</th>
+              <th style={styles.th}>Dirección</th>
             </tr>
           </thead>
           <tbody>
@@ -174,7 +176,7 @@ export default function CustomersPage() {
             {!rows.length && status === "succeeded" && (
               <tr>
                 <td style={styles.td} colSpan={6}>
-                  No customers yet.
+                  Todavía no hay clientes.
                 </td>
               </tr>
             )}

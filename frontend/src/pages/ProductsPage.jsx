@@ -10,7 +10,7 @@ function NewProductModal({ open, onClose, onSubmit, loading }) {
     description: "",
     stockQty: 0,
     price: 0,
-    currency: "USD",
+    currency: "ARS",
   };
   const [form, setForm] = useState(initialForm);
 
@@ -31,14 +31,14 @@ function NewProductModal({ open, onClose, onSubmit, loading }) {
     <div style={styles.modalOverlay} onClick={onClose}>
       <div style={styles.modal} onClick={(e) => e.stopPropagation()}>
         <div style={styles.modalHeader}>
-          <div style={{ fontWeight: 700 }}>New product</div>
+          <div style={{ fontWeight: 700 }}>Nuevo producto</div>
           <button style={styles.iconBtn} onClick={onClose}>
             ✕
           </button>
         </div>
 
         <div style={styles.formGrid}>
-          <label style={styles.label}>Name *</label>
+          <label style={styles.label}>Nombre *</label>
           <input
             style={styles.input}
             value={form.name}
@@ -48,21 +48,21 @@ function NewProductModal({ open, onClose, onSubmit, loading }) {
           <label style={styles.label}>SKU</label>
           <input style={styles.input} value={form.sku} onChange={set("sku")} />
 
-          <label style={styles.label}>Brand</label>
+          <label style={styles.label}>Marca</label>
           <input
             style={styles.input}
             value={form.brand}
             onChange={set("brand")}
           />
 
-          <label style={styles.label}>Description</label>
+          <label style={styles.label}>Descripción</label>
           <textarea
             style={{ ...styles.input, minHeight: 50, resize: "vertical" }}
             value={form.description}
             onChange={set("description")}
           />
 
-          <label style={styles.label}>Stock quantity</label>
+          <label style={styles.label}>Cantidad en stock</label>
           <input
             style={styles.input}
             type="number"
@@ -71,7 +71,7 @@ function NewProductModal({ open, onClose, onSubmit, loading }) {
             onChange={set("stockQty")}
           />
 
-          <label style={styles.label}>Price</label>
+          <label style={styles.label}>Precio</label>
           <input
             style={styles.input}
             type="number"
@@ -81,7 +81,7 @@ function NewProductModal({ open, onClose, onSubmit, loading }) {
             onChange={set("price")}
           />
 
-          <label style={styles.label}>Currency</label>
+          <label style={styles.label}>Moneda</label>
           <select
             style={styles.input}
             value={form.currency}
@@ -95,14 +95,14 @@ function NewProductModal({ open, onClose, onSubmit, loading }) {
 
         <div style={styles.modalFooter}>
           <button style={styles.secondaryBtn} onClick={onClose}>
-            Cancel
+            Cancelar
           </button>
           <button
             style={styles.primaryBtn}
             disabled={loading || !form.name.trim()}
             onClick={() => onSubmit(form)}
           >
-            {loading ? "Creating..." : "Create"}
+            {loading ? "Creando..." : "Crear"}
           </button>
         </div>
       </div>
@@ -147,7 +147,7 @@ export default function ProductsPage() {
         description: payload.description || null,
         stockQty: Number(payload.stockQty) || 0,
         price: Number(payload.price) || 0,
-        currency: payload.currency || "USD",
+        currency: payload.currency || "ARS",
       })
     ).unwrap();
     setOpen(false);

@@ -40,7 +40,7 @@ export const QuoteController = {
 
       const {
         customerId = null,
-        currency = "USD",
+        currency = "ARS",
         validUntil = null,
         items,
       } = req.body;

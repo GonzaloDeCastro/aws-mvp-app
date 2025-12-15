@@ -18,7 +18,7 @@ export default function QuoteDetailPage() {
     if (status === "idle") dispatch(fetchQuoteById(quoteId));
   }, [dispatch, quoteId, status]);
 
-  if (status === "loading") return <div>Loading quote…</div>;
+  if (status === "loading") return <div>Cargando presupuesto…</div>;
   if (status === "failed")
     return <div style={{ color: "crimson" }}>{error}</div>;
   if (!quote) return null;
@@ -54,23 +54,29 @@ export default function QuoteDetailPage() {
 
     if (quote.company.logo) {
       try {
+        const pageWidth = doc.internal.pageSize.getWidth();
+        const logoWidth = 40;
+        const margin = 14;
+        const logoX = pageWidth - margin - logoWidth;
+
         const imgData = await loadImageAsDataUrl(
           `data:image/png;base64,${quote.company.logo}`
         );
-        doc.addImage(imgData, "PNG", 14, 10, 40, 16);
+        // height = 0 mantiene la relación de aspecto
+        doc.addImage(imgData, "PNG", logoX, 10, logoWidth, 0);
         currentY = 30;
       } catch {
-        // ignore logo errors
+        // ignorar errores de logo
       }
     }
 
-    doc.text(`Quote #${quote.quoteNumber}`, 14, currentY);
+    doc.text(`Presupuesto #${quote.quoteNumber}`, 14, currentY);
 
     doc.setFontSize(11);
-    doc.text(`Status: ${quote.status}`, 14, currentY + 8);
+    doc.text(`Estado: ${quote.status}`, 14, currentY + 8);
     if (quote.validUntil) {
       doc.text(
-        `Valid until: ${new Date(quote.validUntil).toLocaleDateString()}`,
+        `Válido hasta: ${new Date(quote.validUntil).toLocaleDateString()}`,
         14,
         currentY + 14
       );
@@ -78,8 +84,8 @@ export default function QuoteDetailPage() {
 
     let y = currentY + 24;
     doc.setFontSize(12);
-    doc.text("Company", 14, y);
-    doc.text("Customer", 110, y);
+    doc.text("Compañía", 14, y);
+    doc.text("Cliente", 110, y);
     y += 6;
 
     doc.setFontSize(10);
@@ -101,7 +107,7 @@ export default function QuoteDetailPage() {
 
     autoTable(doc, {
       startY: y + 10,
-      head: [["Item", "Qty", "Unit price", "Total"]],
+      head: [["Ítem", "Cant.", "Precio unitario", "Total"]],
       body: itemRows,
       styles: { fontSize: 10 },
       headStyles: { fillColor: [40, 40, 60] },
@@ -125,10 +131,10 @@ export default function QuoteDetailPage() {
         }}
       >
         <div>
-          <h2>Quote #{quote.quoteNumber}</h2>
-          <div>Status: {quote.status}</div>
+          <h2>Presupuesto #{quote.quoteNumber}</h2>
+          <div>Estado: {quote.status}</div>
           <div>
-            Valid until: {new Date(quote.validUntil).toLocaleDateString()}
+            Válido hasta: {new Date(quote.validUntil).toLocaleDateString()}
           </div>
         </div>
         <button
@@ -142,20 +148,20 @@ export default function QuoteDetailPage() {
             cursor: "pointer",
           }}
         >
-          Export PDF
+          Exportar PDF
         </button>
       </section>
 
       <section style={{ display: "flex", gap: 40, marginBottom: 24 }}>
         <div>
-          <h4>Company</h4>
+          <h4>Compañía</h4>
           <div>{quote.company.name}</div>
           <div>{quote.company.address}</div>
           <div>{quote.company.email}</div>
         </div>
 
         <div>
-          <h4>Customer</h4>
+          <h4>Cliente</h4>
           <div>{quote.customer?.name}</div>
           <div>{quote.customer?.address}</div>
           <div>{quote.customer?.email}</div>
@@ -174,9 +180,9 @@ export default function QuoteDetailPage() {
       >
         <thead>
           <tr>
-            <th>Item</th>
-            <th>Qty</th>
-            <th>Unit price</th>
+            <th>Ítem</th>
+            <th>Cant.</th>
+            <th>Precio unitario</th>
             <th>Total</th>
           </tr>
         </thead>

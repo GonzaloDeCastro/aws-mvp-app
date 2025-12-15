@@ -43,7 +43,7 @@ export const ProductController = {
         description = null,
         stockQty = 0,
         price = 0,
-        currency = "USD",
+        currency = "ARS",
       } = req.body;
 
       if (!name) throw new HttpError(400, "name is required");
@@ -83,7 +83,7 @@ export const ProductController = {
         description = null,
         stockQty = 0,
         price = 0,
-        currency = "USD",
+        currency = "ARS",
         isActive = 1,
       } = req.body;
 
