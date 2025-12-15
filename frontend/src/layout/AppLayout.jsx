@@ -107,7 +107,12 @@ export default function AppLayout({ title, children }) {
               Logout
             </button>
 
-            <button style={styles.primaryBtn}>New</button>
+            <button
+              style={styles.primaryBtn}
+              onClick={() => navigate("/app/quotes/new")}
+            >
+              New
+            </button>
           </div>
         </header>
 

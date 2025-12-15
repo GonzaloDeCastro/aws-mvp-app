@@ -18,4 +18,48 @@ export const QuoteController = {
       next(e);
     }
   },
+
+  async create(req, res, next) {
+    try {
+      const companyId = Number(req.user?.companyId);
+      const createdByUserId = Number(req.user?.id ?? req.user?.userId);
+      if (!companyId || !createdByUserId)
+        throw new HttpError(401, "Unauthorized");
+
+      const {
+        customerId = null,
+        currency = "USD",
+        validUntil = null,
+        items,
+      } = req.body;
+
+      if (!Array.isArray(items) || items.length === 0) {
+        throw new HttpError(400, "items must be a non-empty array");
+      }
+
+      for (const it of items) {
+        if (!it.productId)
+          throw new HttpError(400, "Each item must include productId");
+        if (Number(it.quantity ?? 0) <= 0)
+          throw new HttpError(400, "quantity must be > 0");
+        if (Number(it.unitPrice ?? -1) < 0)
+          throw new HttpError(400, "unitPrice must be >= 0");
+        if (Number(it.discountPct ?? 0) < 0)
+          throw new HttpError(400, "discountPct must be >= 0");
+      }
+
+      const id = await QuoteModel.createWithItems({
+        companyId,
+        createdByUserId,
+        customerId: customerId ? Number(customerId) : null,
+        currency,
+        validUntil,
+        items,
+      });
+
+      res.status(201).json({ ok: true, data: { id } });
+    } catch (e) {
+      next(e);
+    }
+  },
 };

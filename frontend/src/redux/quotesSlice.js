@@ -1,5 +1,5 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
-import { apiGet } from "../api";
+import { apiGet, apiPost } from "../api";
 
 /**
  * Fetches a quote by id and stores it in a cache map:
@@ -10,6 +10,13 @@ export const fetchQuoteById = createAsyncThunk(
   async (quoteId) => {
     const json = await apiGet(`/quotes/${quoteId}`);
     return { quoteId: Number(quoteId), data: json.data };
+  }
+);
+export const createQuote = createAsyncThunk(
+  "quotes/createQuote",
+  async (payload) => {
+    const json = await apiPost("/quotes", payload);
+    return json.data; // { id }
   }
 );
 

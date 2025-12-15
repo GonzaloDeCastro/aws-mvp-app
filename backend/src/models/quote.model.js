@@ -91,4 +91,125 @@ export const QuoteModel = {
       items,
     };
   },
+
+  async createWithItems({
+    companyId,
+    createdByUserId,
+    customerId,
+    currency,
+    validUntil,
+    items,
+  }) {
+    if (!Array.isArray(items) || items.length === 0) {
+      throw new HttpError(
+        400,
+        "items is required and must be a non-empty array"
+      );
+    }
+
+    const conn = await pool.getConnection();
+
+    try {
+      await conn.beginTransaction();
+
+      // 1) Insert header with a temporary quote_number
+      const [qRes] = await conn.execute(
+        `
+        INSERT INTO quotes
+          (company_id, quote_number, created_by_user_id, customer_id, status, currency, valid_until)
+        VALUES
+          (?, '0000000', ?, ?, 'DRAFT', ?, ?)
+        `,
+        [
+          companyId,
+          createdByUserId,
+          customerId ?? null,
+          currency ?? "USD",
+          validUntil ?? null,
+        ]
+      );
+
+      const quoteId = qRes.insertId;
+
+      // 2) Set quote_number based on quoteId (no self-select)
+      await conn.execute(
+        `UPDATE quotes SET quote_number = LPAD(?, 7, '0') WHERE id = ? AND company_id = ?`,
+        [quoteId, quoteId, companyId]
+      );
+
+      // 3) Fetch products snapshot in ONE query (instead of one SELECT per item)
+      const productIds = [...new Set(items.map((it) => Number(it.productId)))];
+      if (productIds.some((id) => !id))
+        throw new HttpError(400, "Invalid productId in items");
+
+      const placeholders = productIds.map(() => "?").join(",");
+      const [pRows] = await conn.execute(
+        `
+        SELECT id, name, brand
+        FROM products
+        WHERE company_id = ? AND is_active = 1 AND id IN (${placeholders})
+        `,
+        [companyId, ...productIds]
+      );
+
+      const productMap = new Map(pRows.map((p) => [p.id, p]));
+      for (const it of items) {
+        const pid = Number(it.productId);
+        if (!productMap.has(pid)) {
+          throw new HttpError(400, `Invalid productId: ${it.productId}`);
+        }
+      }
+
+      // 4) Bulk insert quote_items (VALUES ?)
+      const values = items.map((it, idx) => {
+        const pid = Number(it.productId);
+        const p = productMap.get(pid);
+
+        const qty = Number(it.quantity);
+        const unitPrice = Number(it.unitPrice);
+        const discountPct = Number(it.discountPct ?? 0);
+
+        if (!Number.isFinite(qty) || qty <= 0)
+          throw new HttpError(400, "quantity must be > 0");
+        if (!Number.isFinite(unitPrice) || unitPrice < 0)
+          throw new HttpError(400, "unitPrice must be >= 0");
+        if (!Number.isFinite(discountPct) || discountPct < 0)
+          throw new HttpError(400, "discountPct must be >= 0");
+
+        const gross = qty * unitPrice;
+        const disc = gross * (discountPct / 100);
+        const lineTotal = Number((gross - disc).toFixed(2));
+
+        return [
+          quoteId,
+          pid,
+          p.name,
+          p.brand ?? null,
+          qty,
+          unitPrice,
+          it.currency ?? currency ?? "USD",
+          discountPct,
+          lineTotal,
+          Number(it.sortOrder ?? idx + 1),
+        ];
+      });
+
+      await conn.query(
+        `
+        INSERT INTO quote_items
+          (quote_id, product_id, item_name, brand, quantity, unit_price, currency, discount_pct, line_total, sort_order)
+        VALUES ?
+        `,
+        [values]
+      );
+
+      await conn.commit();
+      return quoteId;
+    } catch (e) {
+      await conn.rollback();
+      throw e;
+    } finally {
+      conn.release();
+    }
+  },
 };
