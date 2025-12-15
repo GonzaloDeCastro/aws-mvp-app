@@ -38,6 +38,15 @@ export default function QuoteCreatePage() {
     );
   };
 
+  const handleProductChange = (index, productId) => {
+    const p = products.find((prod) => prod.id === Number(productId));
+    const patch = { productId };
+    if (p) {
+      patch.unitPrice = p.price;
+    }
+    updateItem(index, patch);
+  };
+
   const addItemRow = () => {
     setItems((prev) => [
       ...prev,
@@ -180,9 +189,7 @@ export default function QuoteCreatePage() {
                     <select
                       style={styles.input}
                       value={it.productId}
-                      onChange={(e) =>
-                        updateItem(idx, { productId: e.target.value })
-                      }
+                      onChange={(e) => handleProductChange(idx, e.target.value)}
                     >
                       <option value="">Select product...</option>
                       {products.map((p) => (

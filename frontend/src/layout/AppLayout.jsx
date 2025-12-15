@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { NavLink, useLocation } from "react-router-dom";
+import { NavLink } from "react-router-dom";
 import logoPresuflow from "../assets/logo-presuflow.png";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
@@ -8,7 +8,6 @@ import { logout } from "../redux/authSlice";
 export default function AppLayout({ title, children }) {
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const { pathname } = useLocation();
   const user = useSelector((s) => s.auth.user);
 
   const onLogout = () => {
@@ -44,7 +43,7 @@ export default function AppLayout({ title, children }) {
             })}
           >
             <span style={styles.navIcon}>📦</span>
-            {!collapsed && <span>Products</span>}
+            {!collapsed && <span>Productos</span>}
           </NavLink>
 
           <NavLink
@@ -60,7 +59,7 @@ export default function AppLayout({ title, children }) {
             })}
           >
             <span style={styles.navIcon}>🧾</span>
-            {!collapsed && <span>Quotes</span>}
+            {!collapsed && <span>Presupuestos</span>}
           </NavLink>
 
           <NavLink
@@ -76,7 +75,7 @@ export default function AppLayout({ title, children }) {
             })}
           >
             <span style={styles.navIcon}>👤</span>
-            {!collapsed && <span>Customers</span>}
+            {!collapsed && <span>Clientes</span>}
           </NavLink>
         </nav>
 
@@ -106,23 +105,6 @@ export default function AppLayout({ title, children }) {
 
             <button style={styles.secondaryBtn} onClick={onLogout}>
               Logout
-            </button>
-
-            <button
-              style={styles.primaryBtn}
-              onClick={() => {
-                if (pathname.startsWith("/app/products")) {
-                  navigate("/app/products/new");
-                } else if (pathname.startsWith("/app/customers")) {
-                  navigate("/app/customers/new");
-                } else if (pathname.startsWith("/app/quotes")) {
-                  navigate("/app/quotes/new");
-                } else {
-                  navigate("/app/quotes/new");
-                }
-              }}
-            >
-              New
             </button>
           </div>
         </header>
