@@ -2,6 +2,14 @@ import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import { apiGet, apiPost } from "../api";
 
 /**
+ * Fetches a list of quotes for the current company.
+ */
+export const fetchQuotes = createAsyncThunk("quotes/fetchAll", async () => {
+  const json = await apiGet("/quotes");
+  return json.data; // array of quotes
+});
+
+/**
  * Fetches a quote by id and stores it in a cache map:
  * state.byId[quoteId] = quoteData
  */
@@ -12,6 +20,7 @@ export const fetchQuoteById = createAsyncThunk(
     return { quoteId: Number(quoteId), data: json.data };
   }
 );
+
 export const createQuote = createAsyncThunk(
   "quotes/createQuote",
   async (payload) => {
@@ -26,10 +35,27 @@ const quotesSlice = createSlice({
     byId: {}, // { [id]: quote }
     statusById: {}, // { [id]: 'idle' | 'loading' | 'succeeded' | 'failed' }
     errorById: {}, // { [id]: string }
+    list: [], // array of quotes (lightweight view)
+    listStatus: "idle", // 'idle' | 'loading' | 'succeeded' | 'failed'
+    listError: "",
   },
   reducers: {},
   extraReducers: (builder) => {
     builder
+      // List
+      .addCase(fetchQuotes.pending, (state) => {
+        state.listStatus = "loading";
+        state.listError = "";
+      })
+      .addCase(fetchQuotes.fulfilled, (state, action) => {
+        state.list = action.payload ?? [];
+        state.listStatus = "succeeded";
+      })
+      .addCase(fetchQuotes.rejected, (state, action) => {
+        state.listStatus = "failed";
+        state.listError = action.error?.message || "Failed to load quotes";
+      })
+      // Detail
       .addCase(fetchQuoteById.pending, (state, action) => {
         const id = Number(action.meta.arg);
         state.statusById[id] = "loading";

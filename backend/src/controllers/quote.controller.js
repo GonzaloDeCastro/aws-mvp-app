@@ -2,6 +2,18 @@ import { QuoteModel } from "../models/quote.model.js";
 import { HttpError } from "../utils/httpError.js";
 
 export const QuoteController = {
+  async list(req, res, next) {
+    try {
+      const companyId = Number(req.user?.companyId);
+      if (!companyId) throw new HttpError(401, "Unauthorized");
+
+      const rows = await QuoteModel.listByCompany(companyId);
+      res.json({ ok: true, data: rows });
+    } catch (e) {
+      next(e);
+    }
+  },
+
   async getById(req, res, next) {
     try {
       const companyId = Number(req.user?.companyId);

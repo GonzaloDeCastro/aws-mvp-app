@@ -47,7 +47,7 @@ export default function AppLayout({ title, children }) {
           </NavLink>
 
           <NavLink
-            to="/app/quotes/2"
+            to="/app/quotes"
             style={({ isActive }) => ({
               ...styles.navItem,
               border: isActive

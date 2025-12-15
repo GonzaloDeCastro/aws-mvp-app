@@ -1,6 +1,51 @@
 import { pool } from "../config/db.js";
 
 export const QuoteModel = {
+  async listByCompany(companyId) {
+    const [rows] = await pool.execute(
+      `
+      SELECT
+        q.id,
+        q.company_id,
+        q.quote_number,
+        q.status,
+        q.currency,
+        q.valid_until,
+        q.created_at,
+
+        cu.id AS customer_id,
+        cu.name AS customer_name,
+        cu.email AS customer_email,
+        cu.phone AS customer_phone,
+        cu.address AS customer_address
+      FROM quotes q
+      LEFT JOIN customers cu ON cu.id = q.customer_id
+      WHERE q.company_id = :companyId
+      ORDER BY q.created_at DESC, q.id DESC
+      `,
+      { companyId }
+    );
+
+    return rows.map((row) => ({
+      id: row.id,
+      companyId: row.company_id,
+      quoteNumber: row.quote_number,
+      status: row.status,
+      currency: row.currency,
+      validUntil: row.valid_until,
+      createdAt: row.created_at,
+      customer: row.customer_id
+        ? {
+            id: row.customer_id,
+            name: row.customer_name,
+            email: row.customer_email,
+            phone: row.customer_phone,
+            address: row.customer_address,
+          }
+        : null,
+    }));
+  },
+
   async getById({ companyId, quoteId }) {
     // 1) Header + company + customer
     const [headerRows] = await pool.execute(
