@@ -1,6 +1,10 @@
 import dotenv from "dotenv";
 
-dotenv.config();
+// Only load .env file in local development
+// In Vercel, environment variables are injected automatically
+if (process.env.NODE_ENV !== "production") {
+  dotenv.config();
+}
 
 const required = (key) => {
   const value = process.env[key];
