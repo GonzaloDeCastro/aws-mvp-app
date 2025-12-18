@@ -122,6 +122,7 @@ export const ProductModel = {
     stockQty,
     price,
     currency,
+    taxId = null,
     categoryIds = [],
     components = [],
   }) {
@@ -131,9 +132,19 @@ export const ProductModel = {
 
       // Insertar producto
       const [result] = await connection.execute(
-        `INSERT INTO products (company_id, sku, name, brand, description, stock_qty, price, currency)
-         VALUES (:companyId, :sku, :name, :brand, :description, :stockQty, :price, :currency)`,
-        { companyId, sku, name, brand, description, stockQty, price, currency }
+        `INSERT INTO products (company_id, sku, name, brand, description, stock_qty, price, currency, tax_id)
+         VALUES (:companyId, :sku, :name, :brand, :description, :stockQty, :price, :currency, :taxId)`,
+        {
+          companyId,
+          sku,
+          name,
+          brand,
+          description,
+          stockQty,
+          price,
+          currency,
+          taxId: taxId || null,
+        }
       );
       const productId = result.insertId;
 
@@ -187,6 +198,7 @@ export const ProductModel = {
     stockQty,
     price,
     currency,
+    taxId,
     isActive,
     categoryIds,
     components,
@@ -206,6 +218,7 @@ export const ProductModel = {
              stock_qty = :stockQty,
              price = :price,
              currency = :currency,
+             tax_id = :taxId,
              is_active = :isActive
          WHERE company_id = :companyId AND id = :productId`,
         {
@@ -218,6 +231,7 @@ export const ProductModel = {
           stockQty,
           price,
           currency,
+          taxId: taxId !== undefined ? taxId || null : undefined,
           isActive,
         }
       );

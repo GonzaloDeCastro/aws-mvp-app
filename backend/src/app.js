@@ -10,6 +10,7 @@ import quoteRoutes from "./routes/quote.routes.js";
 import customerRoutes from "./routes/customer.routes.js";
 import companyRoutes from "./routes/company.routes.js";
 import categoryRoutes from "./routes/category.routes.js";
+import taxRoutes from "./routes/tax.routes.js";
 import { authMiddleware } from "./middlewares/auth.middleware.js";
 
 export const createApp = () => {
@@ -28,6 +29,7 @@ export const createApp = () => {
   app.use("/api/customers", authMiddleware, customerRoutes);
   app.use("/api/company", companyRoutes);
   app.use("/api/categories", authMiddleware, categoryRoutes);
+  app.use("/api/taxes", authMiddleware, taxRoutes);
 
   app.use(errorMiddleware);
 

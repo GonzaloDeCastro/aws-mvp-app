@@ -5,6 +5,7 @@ import {
   createProduct,
   fetchCategories,
   fetchProducts,
+  fetchTaxes,
   createCategory,
 } from "../redux/productsSlice";
 import Card from "../components/ui/Card";
@@ -27,6 +28,7 @@ export default function ProductCreatePage() {
     createStatus,
     createError,
     categories,
+    taxes,
     items: products,
   } = useSelector((s) => s.products);
 
@@ -50,6 +52,7 @@ export default function ProductCreatePage() {
   useEffect(() => {
     dispatch(fetchCategories());
     dispatch(fetchProducts());
+    dispatch(fetchTaxes());
   }, [dispatch]);
 
   const set = (k) => (e) => {
@@ -192,6 +195,7 @@ export default function ProductCreatePage() {
           stockQty: Number(form.stockQty) || 0,
           price: hasComponents ? calculatedPrice : Number(form.price) || 0,
           currency: form.currency || "ARS",
+          taxId: form.taxId ? Number(form.taxId) : null,
           categoryIds: form.categoryId ? [Number(form.categoryId)] : [],
           components: form.components,
         })
@@ -336,6 +340,28 @@ export default function ProductCreatePage() {
             </Select>
           </div>
 
+          <div className="w-full">
+            <Label>IVA (opcional)</Label>
+            <Select
+              value={form.taxId || "none"}
+              onChange={(e) =>
+                setForm((v) => ({
+                  ...v,
+                  taxId: e.target.value === "none" ? "" : e.target.value,
+                }))
+              }
+            >
+              <option value="none">Sin IVA</option>
+              {taxes &&
+                taxes.length > 0 &&
+                taxes.map((tax) => (
+                  <option key={tax.id} value={tax.id}>
+                    {tax.name} ({tax.rate}%)
+                  </option>
+                ))}
+            </Select>
+          </div>
+
           <div className="col-span-2 border-t border-white/12 pt-2 mt-1">
             <Label>Componentes (productos hijos) - Opcional</Label>
             <div className="text-xs opacity-70 mb-1.5">
@@ -390,39 +416,51 @@ export default function ProductCreatePage() {
                   return (
                     <div
                       key={comp.id}
-                      className="flex items-center gap-1.5 p-1.5 bg-white/5 rounded text-sm"
+                      className="flex items-start gap-1.5 p-2 bg-white/5 rounded text-sm"
                     >
                       <div className="flex-1 min-w-0">
-                        <div className="font-medium truncate">
-                          {product.name}
-                        </div>
-                        <div className="text-xs opacity-70 truncate">
-                          {product.description ||
-                            `${product.brand || ""} - $${product.price} ${
-                              product.currency
-                            } c/u`.trim()}
+                        <div className="font-medium mb-0.5">{product.name}</div>
+                        {product.description && (
+                          <div className="text-xs opacity-80 mb-1 line-clamp-2">
+                            {product.description}
+                          </div>
+                        )}
+                        <div className="text-xs opacity-60">
+                          {product.brand ? `${product.brand} - ` : ""}$
+                          {product.price} {product.currency} c/u
                         </div>
                       </div>
-                      <Input
-                        type="number"
-                        min="0.01"
-                        step="0.01"
-                        value={comp.qty}
-                        onChange={(e) =>
-                          updateComponentQty(comp.id, e.target.value)
-                        }
-                        className="w-14 text-xs"
-                      />
-                      <div className="text-xs opacity-70 w-14 text-right">
-                        ${(Number(comp.qty) * product.price).toFixed(2)}
+                      <div className="flex items-center gap-1.5 flex-shrink-0">
+                        <div className="flex flex-col items-end gap-0.5">
+                          <Label className="text-xs opacity-70 mb-0">
+                            Cant.
+                          </Label>
+                          <Input
+                            type="number"
+                            min="0.01"
+                            step="0.01"
+                            value={comp.qty}
+                            onChange={(e) =>
+                              updateComponentQty(comp.id, e.target.value)
+                            }
+                            className="w-16 text-xs"
+                          />
+                        </div>
+                        <div className="flex flex-col items-end gap-0.5">
+                          <div className="text-xs opacity-50">Total</div>
+                          <div className="text-xs font-medium opacity-90 w-16 text-right">
+                            ${(Number(comp.qty) * product.price).toFixed(2)}
+                          </div>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => removeComponent(comp.id)}
+                          className="text-red-400 hover:text-red-300 px-1.5 py-1 flex-shrink-0 text-sm"
+                          title="Eliminar"
+                        >
+                          ✕
+                        </button>
                       </div>
-                      <button
-                        type="button"
-                        onClick={() => removeComponent(comp.id)}
-                        className="text-red-400 hover:text-red-300 px-1 flex-shrink-0 text-xs"
-                      >
-                        ✕
-                      </button>
                     </div>
                   );
                 })}

@@ -25,6 +25,11 @@ export const fetchCategories = createAsyncThunk(
   }
 );
 
+export const fetchTaxes = createAsyncThunk("products/fetchTaxes", async () => {
+  const json = await apiGet("/taxes");
+  return json.data ?? [];
+});
+
 export const createCategory = createAsyncThunk(
   "products/createCategory",
   async (payload) => {
@@ -94,6 +99,16 @@ const productsSlice = createSlice({
       })
       .addCase(fetchCategories.rejected, (state) => {
         state.categoriesStatus = "failed";
+      })
+      .addCase(fetchTaxes.pending, (state) => {
+        state.taxesStatus = "loading";
+      })
+      .addCase(fetchTaxes.fulfilled, (state, action) => {
+        state.taxesStatus = "succeeded";
+        state.taxes = action.payload;
+      })
+      .addCase(fetchTaxes.rejected, (state) => {
+        state.taxesStatus = "failed";
       })
       .addCase(createCategory.fulfilled, (state, action) => {
         // Recargar categorías después de crear una nueva

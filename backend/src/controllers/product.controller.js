@@ -58,6 +58,7 @@ export const ProductController = {
         stockQty = 0,
         price = 0,
         currency = "ARS",
+        taxId = null,
         categoryIds = [],
         components = [],
       } = req.body;
@@ -85,6 +86,7 @@ export const ProductController = {
         stockQty: Number(stockQty),
         price: Number(price),
         currency,
+        taxId: taxId ? Number(taxId) : null,
         categoryIds: Array.isArray(categoryIds) ? categoryIds : [],
         components: Array.isArray(components) ? components : [],
       });
@@ -111,6 +113,7 @@ export const ProductController = {
         stockQty = 0,
         price = 0,
         currency = "ARS",
+        taxId = null,
         isActive = 1,
         categoryIds,
         components,
@@ -140,6 +143,7 @@ export const ProductController = {
         stockQty: Number(stockQty),
         price: Number(price),
         currency,
+        taxId: taxId !== undefined ? (taxId ? Number(taxId) : null) : undefined,
         isActive: Number(isActive) ? 1 : 0,
         categoryIds:
           categoryIds !== undefined
