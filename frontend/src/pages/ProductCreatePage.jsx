@@ -9,11 +9,15 @@ import {
 } from "../redux/productsSlice";
 import Card from "../components/ui/Card";
 import Modal from "../components/ui/Modal";
+import Toolbar, {
+  ToolbarTitle,
+  ToolbarActions,
+} from "../components/ui/Toolbar";
 import { PrimaryButton, SecondaryButton } from "../components/ui/Button";
 import Input from "../components/ui/Input";
 import Label from "../components/ui/Label";
 import Select from "../components/ui/Select";
-import { ErrorAlert } from "../components/ui/Alert";
+import { ErrorAlert, InfoAlert } from "../components/ui/Alert";
 
 export default function ProductCreatePage() {
   const dispatch = useDispatch();
@@ -41,6 +45,7 @@ export default function ProductCreatePage() {
   const [newComponent, setNewComponent] = useState({ id: "", qty: 1 });
   const [showCategoryModal, setShowCategoryModal] = useState(false);
   const [newCategoryName, setNewCategoryName] = useState("");
+  const [errors, setErrors] = useState({});
 
   useEffect(() => {
     dispatch(fetchCategories());
@@ -50,6 +55,10 @@ export default function ProductCreatePage() {
   const set = (k) => (e) => {
     const value = e.target.value;
     setForm((v) => ({ ...v, [k]: value }));
+    // Limpiar error del campo cuando el usuario empieza a escribir
+    if (errors[k]) {
+      setErrors((e) => ({ ...e, [k]: undefined }));
+    }
   };
 
   const handleCategoryChange = (e) => {
@@ -145,62 +154,106 @@ export default function ProductCreatePage() {
     }
   }, [componentsKey, hasComponents, products.length]); // Cuando cambian componentes
 
-  const onCreate = async () => {
-    await dispatch(
-      createProduct({
-        sku: form.sku || null,
-        name: form.name.trim(),
-        brand: form.brand || null,
-        description: form.description || null,
-        stockQty: Number(form.stockQty) || 0,
-        price: hasComponents ? calculatedPrice : Number(form.price) || 0, // Si tiene componentes, usar precio calculado
-        currency: form.currency || "ARS",
-        categoryIds: form.categoryId ? [Number(form.categoryId)] : [],
-        components: form.components,
-      })
-    ).unwrap();
+  const validateForm = () => {
+    const newErrors = {};
 
-    navigate("/app/products");
+    if (!form.name.trim()) {
+      newErrors.name = "El nombre es obligatorio";
+    }
+
+    if (!form.sku.trim()) {
+      newErrors.sku = "El SKU es obligatorio";
+    }
+
+    if (!hasComponents && (!form.price || Number(form.price) <= 0)) {
+      newErrors.price = "El precio es obligatorio y debe ser mayor a 0";
+    }
+
+    if (Number(form.stockQty) < 0) {
+      newErrors.stockQty = "La cantidad en stock no puede ser negativa";
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const onCreate = async () => {
+    if (!validateForm()) {
+      return;
+    }
+
+    try {
+      await dispatch(
+        createProduct({
+          sku: form.sku.trim() || null,
+          name: form.name.trim(),
+          brand: form.brand.trim() || null,
+          description: form.description.trim() || null,
+          stockQty: Number(form.stockQty) || 0,
+          price: hasComponents ? calculatedPrice : Number(form.price) || 0,
+          currency: form.currency || "ARS",
+          categoryIds: form.categoryId ? [Number(form.categoryId)] : [],
+          components: form.components,
+        })
+      ).unwrap();
+
+      navigate("/app/products");
+    } catch (error) {
+      // El error se maneja en createError del estado
+    }
   };
 
   const disabled =
     !form.name.trim() ||
+    !form.sku.trim() ||
     createStatus === "loading" ||
     createStatus === "succeeded";
 
   return (
     <div className="grid gap-3">
-      <Card>
-        <div className="flex justify-between items-center mb-3">
-          <div>
-            <div className="text-[11px] opacity-70">Productos</div>
-            <h2 className="m-0 text-lg">Nuevo producto</h2>
-          </div>
+      <Toolbar>
+        <ToolbarTitle kicker="Productos" title="Nuevo producto" />
+        <ToolbarActions>
+          <SecondaryButton onClick={() => navigate("/app/products")}>
+            Cancelar
+          </SecondaryButton>
           <PrimaryButton onClick={onCreate} disabled={disabled}>
             {createStatus === "loading" ? "Creando..." : "Crear"}
           </PrimaryButton>
-        </div>
+        </ToolbarActions>
+      </Toolbar>
 
-        <div className="grid grid-cols-2 gap-4">
-          <div>
+      {createError && <ErrorAlert>{createError}</ErrorAlert>}
+
+      <Card>
+        <div className="grid grid-cols-2 gap-2">
+          <div className="w-full">
             <Label>Nombre *</Label>
             <Input
               value={form.name}
               onChange={set("name")}
               placeholder="Nombre del producto"
+              className={errors.name ? "border-red-500/50" : ""}
             />
+            {errors.name && (
+              <div className="text-xs text-red-400 mt-1">{errors.name}</div>
+            )}
           </div>
 
-          <div>
-            <Label>SKU</Label>
+          <div className="w-full">
+            <Label>SKU *</Label>
             <Input
               value={form.sku}
               onChange={set("sku")}
-              placeholder="SKU opcional"
+              placeholder="SKU del producto"
+              className={`w-full ${errors.sku ? "border-red-500/50" : ""}`}
             />
+            {errors.sku && (
+              <div className="text-xs text-red-400 mt-1">{errors.sku}</div>
+            )}
           </div>
 
-          <div>
+          <div className="w-full">
             <Label>Marca</Label>
             <Input
               value={form.brand}
@@ -209,9 +262,9 @@ export default function ProductCreatePage() {
             />
           </div>
 
-          <div>
+          <div className="w-full">
             <Label>Categoría (opcional)</Label>
-            <div className="flex gap-2">
+            <div className="flex gap-1.5">
               <Select
                 value={form.categoryId || "none"}
                 onChange={handleCategoryChange}
@@ -233,26 +286,30 @@ export default function ProductCreatePage() {
           <div className="col-span-2">
             <Label>Descripción</Label>
             <textarea
-              className="rounded-xl border border-white/12 bg-[rgba(0,0,0,0.22)] px-3 py-2.5 text-[#e8eefc] outline-none min-h-[80px] resize-y placeholder:text-white/50 w-full"
+              className="rounded-xl border border-white/12 bg-[rgba(0,0,0,0.22)] px-3 py-2.5 text-[#e8eefc] outline-none min-h-[60px] resize-y placeholder:text-white/50 w-full"
               value={form.description}
               onChange={set("description")}
               placeholder="Descripción opcional"
             />
           </div>
 
-          <div>
+          <div className="w-full">
             <Label>Cantidad en stock</Label>
             <Input
               type="number"
               min="0"
               value={form.stockQty}
               onChange={set("stockQty")}
+              className={`w-full ${errors.stockQty ? "border-red-500/50" : ""}`}
             />
+            {errors.stockQty && (
+              <div className="text-xs text-red-400 mt-1">{errors.stockQty}</div>
+            )}
           </div>
 
-          <div>
+          <div className="w-full">
             <Label>
-              Precio {hasComponents && "(se calcula automáticamente)"}
+              Precio {hasComponents && "(se calcula automáticamente)"} *
             </Label>
             <Input
               type="number"
@@ -263,10 +320,14 @@ export default function ProductCreatePage() {
               disabled={hasComponents}
               placeholder={hasComponents ? "Se calcula desde componentes" : ""}
               readOnly={hasComponents}
+              className={errors.price ? "border-red-500/50" : ""}
             />
+            {errors.price && (
+              <div className="text-xs text-red-400 mt-1">{errors.price}</div>
+            )}
           </div>
 
-          <div>
+          <div className="w-full">
             <Label>Moneda</Label>
             <Select value={form.currency} onChange={set("currency")}>
               <option value="ARS">ARS</option>
@@ -275,13 +336,13 @@ export default function ProductCreatePage() {
             </Select>
           </div>
 
-          <div className="col-span-2 border-t border-white/12 pt-3 mt-2">
+          <div className="col-span-2 border-t border-white/12 pt-2 mt-1">
             <Label>Componentes (productos hijos) - Opcional</Label>
-            <div className="text-xs opacity-70 mb-2">
+            <div className="text-xs opacity-70 mb-1.5">
               Si agregas componentes, el precio se calculará automáticamente
             </div>
 
-            <div className="flex gap-2 mb-2">
+            <div className="flex gap-1.5 mb-1.5">
               <Select
                 value={newComponent.id}
                 onChange={(e) =>
@@ -319,17 +380,19 @@ export default function ProductCreatePage() {
             </div>
 
             {form.components.length > 0 && (
-              <div className="space-y-2">
+              <div className="space-y-1.5 max-h-48 overflow-y-auto">
                 {form.components.map((comp) => {
                   const product = products.find((p) => p.id === comp.id);
                   if (!product) return null;
                   return (
                     <div
                       key={comp.id}
-                      className="flex items-center gap-2 p-2 bg-white/5 rounded-lg"
+                      className="flex items-center gap-1.5 p-1.5 bg-white/5 rounded text-sm"
                     >
-                      <div className="flex-1">
-                        <div className="font-medium">{product.name}</div>
+                      <div className="flex-1 min-w-0">
+                        <div className="font-medium truncate">
+                          {product.name}
+                        </div>
                         <div className="text-xs opacity-70">
                           ${product.price} {product.currency} c/u
                         </div>
@@ -342,22 +405,22 @@ export default function ProductCreatePage() {
                         onChange={(e) =>
                           updateComponentQty(comp.id, e.target.value)
                         }
-                        className="w-20"
+                        className="w-16 text-sm"
                       />
-                      <div className="text-sm opacity-70">
+                      <div className="text-xs opacity-70 w-16 text-right">
                         = ${(Number(comp.qty) * product.price).toFixed(2)}
                       </div>
                       <button
                         type="button"
                         onClick={() => removeComponent(comp.id)}
-                        className="text-red-400 hover:text-red-300 px-2"
+                        className="text-red-400 hover:text-red-300 px-1 flex-shrink-0"
                       >
                         ✕
                       </button>
                     </div>
                   );
                 })}
-                <div className="text-sm font-medium pt-2 border-t border-white/12">
+                <div className="text-xs font-medium pt-1.5 border-t border-white/12">
                   Total estimado: $
                   {form.components
                     .reduce((sum, comp) => {
@@ -371,10 +434,6 @@ export default function ProductCreatePage() {
             )}
           </div>
         </div>
-
-        {createError && (
-          <ErrorAlert className="mt-2.5">{createError}</ErrorAlert>
-        )}
       </Card>
 
       {/* Modal para crear categoría */}
