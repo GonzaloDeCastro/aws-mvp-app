@@ -1,0 +1,76 @@
+name: Deploy to AWS EC2
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch: # Permite ejecutar manualmente desde GitHub
+
+env:
+  DOCKER_BUILDKIT: 1
+  COMPOSE_DOCKER_CLI_BUILD: 1
+
+jobs:
+  deploy:
+    name: Deploy to EC2
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Configure SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.EC2_SSH_KEY }}" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -H ${{ secrets.EC2_HOST }} >> ~/.ssh/known_hosts
+
+      - name: Copy files to EC2
+        run: |
+          rsync -avz --delete \
+            -e "ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no" \
+            --exclude '.git' \
+            --exclude 'node_modules' \
+            --exclude 'backend/node_modules' \
+            --exclude 'frontend/node_modules' \
+            --exclude '.env' \
+            --exclude 'backend/.env.local' \
+            --exclude 'backend/.env.production' \
+            --exclude 'frontend/.env.local' \
+            --exclude '*.log' \
+            --exclude '*.pem' \
+            --exclude '*.key' \
+            ./ ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}:~/aws-mvp-app/
+
+      - name: Deploy on EC2
+        run: |
+          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no \
+            ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} << 'EOF'
+            set -e
+            cd ~/aws-mvp-app
+            
+            # Exportar variables de entorno para docker-compose
+            export VITE_API_BASE_URL=${{ secrets.VITE_API_BASE_URL }}
+            
+            # Construir y levantar servicios
+            docker-compose -f docker-compose.prod.yml pull || true
+            docker-compose -f docker-compose.prod.yml build --no-cache
+            docker-compose -f docker-compose.prod.yml up -d
+            
+            # Limpiar imágenes antiguas
+            docker image prune -f
+            
+            # Verificar que los servicios estén corriendo
+            sleep 10
+            docker-compose -f docker-compose.prod.yml ps
+            
+            echo "✅ Despliegue completado"
+          EOF
+
+      - name: Health Check
+        run: |
+          sleep 15
+          BACKEND_URL="${{ secrets.VITE_API_BASE_URL }}/health"
+          echo "Verificando health check en: $BACKEND_URL"
+          curl -f $BACKEND_URL || echo "⚠️ Health check falló, pero el despliegue continuó"

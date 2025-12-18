@@ -110,73 +110,106 @@ db/seed.sql
 
 ## 🚀 Getting Started (Local Development)
 
-### 1️⃣ Clone the repository
+### Desarrollo Local con Azure MySQL
+
+Para ejecutar localmente conectándote a la base de datos de Azure:
+
+#### 1️⃣ Clone the repository
 
 ```bash
 git clone <your-repo-url>
 cd aws-mvp-app
 ```
 
----
+#### 2️⃣ Configurar variables de entorno
 
-### 2️⃣ Backend setup
-
-```bash
-cd backend
-npm install
-```
-
-Create a `.env.local` file:
+**Backend** (`backend/.env.local`):
 
 ```env
+NODE_ENV=development
 PORT=3001
-
-DB_HOST=localhost
+DB_HOST=tu-servidor-azure.mysql.database.azure.com
 DB_PORT=3306
-DB_USER=root
-DB_PASSWORD=your_password
-DB_NAME=presupuestos_db
-
-JWT_SECRET=dev_secret
+DB_USER=gonzalo
+DB_PASSWORD=NuevaPasswordSegura123!
+DB_NAME=presuflow
+DB_SSL=true
+DB_SSL_REJECT_UNAUTHORIZED=false
+JWT_SECRET=presuflow_super_secret_change_this
 JWT_EXPIRES_IN=1d
 ```
 
-Run the backend:
+**Frontend** (`frontend/.env.local`):
+
+```env
+VITE_API_BASE_URL=http://localhost:3001
+```
+
+#### 3️⃣ Instalar dependencias
 
 ```bash
-npm run dev
-```
-
-Health check:
-
-```
-GET http://localhost:3001/health
-```
-
----
-
-### 3️⃣ Database setup
-
-- Create the database
-- Run the schema and seed scripts from `db/seed.sql`
-
-Make sure the backend can connect successfully before continuing.
-
----
-
-### 4️⃣ Frontend setup
-
-```bash
-cd frontend
 npm install
+npm run install:all
+```
+
+#### 4️⃣ Iniciar servicios
+
+```bash
+# Desarrollo (con hot-reload)
 npm run dev
 ```
 
-Open:
+- **Backend:** http://localhost:3001
+- **Frontend:** http://localhost:5173
 
+**📚 Guía completa: [LOCAL_DEV.md](./LOCAL_DEV.md)**
+
+### Alternativa: Usar Docker localmente
+
+```bash
+docker-compose up --build
 ```
-http://localhost:5173
+
+---
+
+## 🚀 Deployment on Amazon EC2
+
+### 🐳 Docker (Recomendado)
+
+La forma más fácil y consistente de desplegar en EC2 es usando Docker:
+
+```bash
+# 1. Instalar Docker en EC2
+sudo yum install docker -y
+sudo systemctl start docker
+sudo usermod -aG docker ec2-user
+
+# 2. Configurar variables de entorno
+# Backend: Crear backend/.env.production con credenciales de Azure MySQL
+# Frontend: Crear .env en la raíz con VITE_API_BASE_URL=http://tu-ip-ec2:3001
+
+# 3. Construir y levantar servicios
+docker-compose -f docker-compose.prod.yml up -d --build
+
+# 4. Ver logs
+docker-compose -f docker-compose.prod.yml logs -f
 ```
+
+**📚 Guías:**
+
+- ⚡ [Inicio Rápido](./QUICK_START.md) - Para empezar rápido
+- 🚀 [GitHub Actions CI/CD](./GITHUB_ACTIONS_SETUP.md) - Despliegue automático
+- 🐳 [Guía Completa de Docker](./DOCKER.md) - Documentación completa
+
+### 🔄 CI/CD con GitHub Actions
+
+El proyecto incluye un workflow de GitHub Actions para despliegue automático:
+
+- Se ejecuta automáticamente en cada push a `main`
+- También se puede ejecutar manualmente desde GitHub Actions
+- Despliega automáticamente en EC2 usando Docker Compose
+
+**📚 Configuración completa:** [GITHUB_ACTIONS_SETUP.md](./GITHUB_ACTIONS_SETUP.md)
 
 ---
 
@@ -226,9 +259,9 @@ Returns:
 - [ ] PDF export for quotes
 - [ ] Email sending (quotes)
 - [ ] Authentication in frontend
-- [ ] Dockerization
-- [ ] CI/CD pipeline
-- [ ] AWS EC2 deployment
+- [x] Dockerization
+- [x] CI/CD pipeline (GitHub Actions)
+- [x] AWS EC2 deployment
 - [ ] Optional TypeScript migration
 
 ---

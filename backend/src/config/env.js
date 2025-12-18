@@ -1,9 +1,24 @@
 import dotenv from "dotenv";
+import { existsSync } from "fs";
 
-// Only load .env file in local development
-// In Vercel, environment variables are injected automatically
-if (process.env.NODE_ENV !== "production") {
-  dotenv.config();
+// Load .env file in local development (not in Docker/containerized environments)
+// Priority: .env.local > .env
+// In production (Vercel, Docker), environment variables are injected automatically
+// Check if we're in a containerized environment (Docker sets these)
+const isContainerized =
+  process.env.DOCKER_CONTAINER === "true" ||
+  existsSync("/.dockerenv") ||
+  process.env.NODE_ENV === "production";
+
+if (!isContainerized && process.env.NODE_ENV !== "production") {
+  // Try .env.local first, then fallback to .env
+  if (existsSync(".env.local")) {
+    dotenv.config({ path: ".env.local" });
+  }
+  // Only load .env if it exists (don't fail if it doesn't)
+  if (existsSync(".env")) {
+    dotenv.config(); // This will not override existing variables from .env.local
+  }
 }
 
 const required = (key) => {
