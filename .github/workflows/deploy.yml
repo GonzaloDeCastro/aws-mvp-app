@@ -14,6 +14,7 @@ jobs:
   deploy:
     name: Deploy to EC2
     runs-on: ubuntu-latest
+    timeout-minutes: 30 # Timeout de 30 minutos para builds largos
 
     steps:
       - name: Checkout code
@@ -71,7 +72,7 @@ jobs:
       - name: Copy files to EC2
         run: |
           rsync -avz --delete \
-            -e "ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no -o ConnectTimeout=30" \
+            -e "ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no -o ConnectTimeout=30 -o ServerAliveInterval=60 -o ServerAliveCountMax=10" \
             --exclude '.git' \
             --exclude 'node_modules' \
             --exclude 'backend/node_modules' \
@@ -87,7 +88,11 @@ jobs:
 
       - name: Deploy on EC2
         run: |
-          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no \
+          ssh -i ~/.ssh/deploy_key \
+            -o StrictHostKeyChecking=no \
+            -o ServerAliveInterval=60 \
+            -o ServerAliveCountMax=10 \
+            -o ConnectTimeout=30 \
             ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} << 'EOF'
             set -e
             cd ~/aws-mvp-app
@@ -97,15 +102,20 @@ jobs:
             
             # Construir y levantar servicios
             # Usar 'docker compose' (plugin) en lugar de 'docker-compose' (standalone)
+            echo "📦 Construyendo imágenes Docker (esto puede tardar varios minutos)..."
             docker compose -f docker-compose.prod.yml pull || true
-            docker compose -f docker-compose.prod.yml build --no-cache
+            docker compose -f docker-compose.prod.yml build --no-cache --progress=plain
+            
+            echo "▶️  Levantando servicios..."
             docker compose -f docker-compose.prod.yml up -d
             
             # Limpiar imágenes antiguas
+            echo "🧹 Limpiando imágenes antiguas..."
             docker image prune -f
             
             # Verificar que los servicios estén corriendo
-            sleep 10
+            echo "⏳ Esperando a que los servicios inicien..."
+            sleep 15
             docker compose -f docker-compose.prod.yml ps
             
             echo "✅ Despliegue completado"
