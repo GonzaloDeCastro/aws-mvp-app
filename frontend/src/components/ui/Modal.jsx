@@ -1,5 +1,13 @@
-export default function Modal({ open, onClose, children, className = "" }) {
+export default function Modal({
+  open,
+  onClose,
+  children,
+  className = "",
+  wide = false,
+}) {
   if (!open) return null;
+
+  const maxWidth = wide ? "max-w-[800px]" : "max-w-[520px]";
 
   return (
     <div
@@ -7,7 +15,7 @@ export default function Modal({ open, onClose, children, className = "" }) {
       onClick={onClose}
     >
       <div
-        className={`w-full max-w-[520px] rounded-[18px] border border-white/20 bg-[#0b1220] p-4 text-[#e8eefc] ${className}`}
+        className={`w-full ${maxWidth} rounded-[18px] border border-white/20 bg-[#0b1220] p-4 text-[#e8eefc] ${className}`}
         onClick={(e) => e.stopPropagation()}
       >
         {children}

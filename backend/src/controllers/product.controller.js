@@ -25,7 +25,21 @@ export const ProductController = {
       const row = await ProductModel.getById({ companyId, productId });
       if (!row) throw new HttpError(404, "Product not found");
 
-      res.json({ ok: true, data: row });
+      // Obtener categorías y componentes
+      const categories = await ProductModel.getCategories(productId);
+      const components = await ProductModel.getComponents(productId);
+
+      res.json({
+        ok: true,
+        data: {
+          ...row,
+          categories: categories.map((c) => c.id),
+          components: components.map((c) => ({
+            id: c.id,
+            qty: Number(c.qty),
+          })),
+        },
+      });
     } catch (e) {
       next(e);
     }
@@ -44,12 +58,23 @@ export const ProductController = {
         stockQty = 0,
         price = 0,
         currency = "ARS",
+        categoryIds = [],
+        components = [],
       } = req.body;
 
       if (!name) throw new HttpError(400, "name is required");
       if (Number(price) < 0) throw new HttpError(400, "price must be >= 0");
       if (Number(stockQty) < 0)
         throw new HttpError(400, "stockQty must be >= 0");
+
+      // Validar componentes
+      if (components && components.length > 0) {
+        for (const comp of components) {
+          if (!comp.id) throw new HttpError(400, "component.id is required");
+          if (Number(comp.qty) <= 0)
+            throw new HttpError(400, "component.qty must be > 0");
+        }
+      }
 
       const id = await ProductModel.create({
         companyId,
@@ -60,6 +85,8 @@ export const ProductController = {
         stockQty: Number(stockQty),
         price: Number(price),
         currency,
+        categoryIds: Array.isArray(categoryIds) ? categoryIds : [],
+        components: Array.isArray(components) ? components : [],
       });
 
       res.status(201).json({ ok: true, data: { id } });
@@ -85,12 +112,23 @@ export const ProductController = {
         price = 0,
         currency = "ARS",
         isActive = 1,
+        categoryIds,
+        components,
       } = req.body;
 
       if (!name) throw new HttpError(400, "name is required");
       if (Number(price) < 0) throw new HttpError(400, "price must be >= 0");
       if (Number(stockQty) < 0)
         throw new HttpError(400, "stockQty must be >= 0");
+
+      // Validar componentes si se proporcionan
+      if (components !== undefined && components.length > 0) {
+        for (const comp of components) {
+          if (!comp.id) throw new HttpError(400, "component.id is required");
+          if (Number(comp.qty) <= 0)
+            throw new HttpError(400, "component.qty must be > 0");
+        }
+      }
 
       const affected = await ProductModel.update({
         companyId,
@@ -103,6 +141,18 @@ export const ProductController = {
         price: Number(price),
         currency,
         isActive: Number(isActive) ? 1 : 0,
+        categoryIds:
+          categoryIds !== undefined
+            ? Array.isArray(categoryIds)
+              ? categoryIds
+              : []
+            : undefined,
+        components:
+          components !== undefined
+            ? Array.isArray(components)
+              ? components
+              : []
+            : undefined,
       });
 
       if (!affected) throw new HttpError(404, "Product not found");
