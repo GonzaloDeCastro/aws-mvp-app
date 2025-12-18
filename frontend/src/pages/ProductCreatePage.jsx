@@ -342,21 +342,23 @@ export default function ProductCreatePage() {
               Si agregas componentes, el precio se calculará automáticamente
             </div>
 
-            <div className="flex gap-1.5 mb-1.5">
-              <Select
-                value={newComponent.id}
-                onChange={(e) =>
-                  setNewComponent({ ...newComponent, id: e.target.value })
-                }
-                className="flex-1"
-              >
-                <option value="">Seleccionar producto...</option>
-                {availableProducts.map((p) => (
-                  <option key={p.id} value={p.id}>
-                    {p.name} - ${p.price} {p.currency}
-                  </option>
-                ))}
-              </Select>
+            <div className="flex gap-1.5 mb-1.5 items-center">
+              <div className="flex-1 min-w-0">
+                <Select
+                  value={newComponent.id}
+                  onChange={(e) =>
+                    setNewComponent({ ...newComponent, id: e.target.value })
+                  }
+                >
+                  <option value="">Seleccionar producto...</option>
+                  {availableProducts.map((p) => (
+                    <option key={p.id} value={p.id}>
+                      {p.name} {p.description ? `- ${p.description}` : ""} - $
+                      {p.price} {p.currency}
+                    </option>
+                  ))}
+                </Select>
+              </div>
               <Input
                 type="number"
                 min="0.01"
@@ -368,12 +370,13 @@ export default function ProductCreatePage() {
                     qty: e.target.value,
                   })
                 }
-                placeholder="Cantidad"
-                className="w-24"
+                placeholder="Cant."
+                className="!w-14 flex-shrink-0"
               />
               <SecondaryButton
                 onClick={addComponent}
                 disabled={!newComponent.id}
+                className="flex-shrink-0"
               >
                 Agregar
               </SecondaryButton>
@@ -393,8 +396,11 @@ export default function ProductCreatePage() {
                         <div className="font-medium truncate">
                           {product.name}
                         </div>
-                        <div className="text-xs opacity-70">
-                          ${product.price} {product.currency} c/u
+                        <div className="text-xs opacity-70 truncate">
+                          {product.description ||
+                            `${product.brand || ""} - $${product.price} ${
+                              product.currency
+                            } c/u`.trim()}
                         </div>
                       </div>
                       <Input
@@ -405,15 +411,15 @@ export default function ProductCreatePage() {
                         onChange={(e) =>
                           updateComponentQty(comp.id, e.target.value)
                         }
-                        className="w-16 text-sm"
+                        className="w-14 text-xs"
                       />
-                      <div className="text-xs opacity-70 w-16 text-right">
-                        = ${(Number(comp.qty) * product.price).toFixed(2)}
+                      <div className="text-xs opacity-70 w-14 text-right">
+                        ${(Number(comp.qty) * product.price).toFixed(2)}
                       </div>
                       <button
                         type="button"
                         onClick={() => removeComponent(comp.id)}
-                        className="text-red-400 hover:text-red-300 px-1 flex-shrink-0"
+                        className="text-red-400 hover:text-red-300 px-1 flex-shrink-0 text-xs"
                       >
                         ✕
                       </button>

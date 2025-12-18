@@ -30,7 +30,13 @@ export default function QuoteCreatePage() {
   const [notes, setNotes] = useState("");
 
   const [items, setItems] = useState([
-    { productId: "", quantity: 1, unitPrice: "", discountPct: 0 },
+    {
+      productId: "",
+      quantity: 1,
+      unitPrice: "",
+      discountPct: 0,
+      taxRate: null,
+    },
   ]);
 
   useEffect(() => {
@@ -52,6 +58,9 @@ export default function QuoteCreatePage() {
     const patch = { productId };
     if (p) {
       patch.unitPrice = p.price;
+      patch.taxRate = p.tax_rate || null;
+    } else {
+      patch.taxRate = null;
     }
     updateItem(index, patch);
   };
@@ -59,7 +68,13 @@ export default function QuoteCreatePage() {
   const addItemRow = () => {
     setItems((prev) => [
       ...prev,
-      { productId: "", quantity: 1, unitPrice: "", discountPct: 0 },
+      {
+        productId: "",
+        quantity: 1,
+        unitPrice: "",
+        discountPct: 0,
+        taxRate: null,
+      },
     ]);
   };
 
@@ -180,71 +195,114 @@ export default function QuoteCreatePage() {
                   Descuento %
                 </th>
                 <th className="text-left text-xs opacity-80 py-3 px-3 border-b border-white/8">
+                  Total
+                </th>
+                <th className="text-left text-xs opacity-80 py-3 px-3 border-b border-white/8">
+                  Total con IVA
+                </th>
+                <th className="text-left text-xs opacity-80 py-3 px-3 border-b border-white/8">
                   Acciones
                 </th>
               </tr>
             </thead>
             <tbody>
-              {items.map((it, idx) => (
-                <tr key={idx}>
-                  <td>
-                    <Select
-                      className="w-full"
-                      value={it.productId}
-                      onChange={(e) => handleProductChange(idx, e.target.value)}
-                    >
-                      <option value="">Selecciona un producto...</option>
-                      {products.map((p) => (
-                        <option key={p.id} value={p.id}>
-                          {p.name} {p.brand ? `(${p.brand})` : ""}
-                        </option>
-                      ))}
-                    </Select>
-                  </td>
-                  <td>
-                    <Input
-                      type="number"
-                      min="1"
-                      value={it.quantity}
-                      onChange={(e) =>
-                        updateItem(idx, { quantity: e.target.value })
-                      }
-                    />
-                  </td>
-                  <td>
-                    <Input
-                      type="number"
-                      min="0"
-                      step="0.01"
-                      value={it.unitPrice}
-                      onChange={(e) =>
-                        updateItem(idx, { unitPrice: e.target.value })
-                      }
-                    />
-                  </td>
-                  <td>
-                    <Input
-                      type="number"
-                      min="0"
-                      max="100"
-                      step="0.01"
-                      value={it.discountPct}
-                      onChange={(e) =>
-                        updateItem(idx, { discountPct: e.target.value })
-                      }
-                    />
-                  </td>
-                  <td>
-                    <DangerButton
-                      type="button"
-                      onClick={() => removeItemRow(idx)}
-                      disabled={items.length === 1}
-                    >
-                      Eliminar
-                    </DangerButton>
-                  </td>
-                </tr>
-              ))}
+              {items.map((it, idx) => {
+                const quantity = Number(it.quantity) || 0;
+                const unitPrice = Number(it.unitPrice) || 0;
+                const discountPct = Number(it.discountPct) || 0;
+                const taxRate =
+                  it.taxRate !== null && it.taxRate !== undefined
+                    ? Number(it.taxRate)
+                    : 0;
+
+                const gross = quantity * unitPrice;
+                const discount = gross * (discountPct / 100);
+                const lineTotal = Number((gross - discount).toFixed(2));
+                const taxAmount = Number(
+                  (lineTotal * (taxRate / 100)).toFixed(2)
+                );
+                const grossLineTotal = Number(
+                  (lineTotal * (1 + taxRate / 100)).toFixed(2)
+                );
+
+                return (
+                  <tr key={idx}>
+                    <td>
+                      <Select
+                        className="w-full"
+                        value={it.productId}
+                        onChange={(e) =>
+                          handleProductChange(idx, e.target.value)
+                        }
+                      >
+                        <option value="">Selecciona un producto...</option>
+                        {products.map((p) => (
+                          <option key={p.id} value={p.id}>
+                            {p.name} {p.brand ? `(${p.brand})` : ""}
+                          </option>
+                        ))}
+                      </Select>
+                    </td>
+                    <td>
+                      <Input
+                        type="number"
+                        min="1"
+                        value={it.quantity}
+                        onChange={(e) =>
+                          updateItem(idx, { quantity: e.target.value })
+                        }
+                      />
+                    </td>
+                    <td>
+                      <Input
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        value={it.unitPrice}
+                        onChange={(e) =>
+                          updateItem(idx, { unitPrice: e.target.value })
+                        }
+                      />
+                    </td>
+                    <td>
+                      <Input
+                        type="number"
+                        min="0"
+                        max="100"
+                        step="0.01"
+                        value={it.discountPct}
+                        onChange={(e) =>
+                          updateItem(idx, { discountPct: e.target.value })
+                        }
+                      />
+                    </td>
+                    <td>
+                      <div className="px-3 py-2.5 text-sm">
+                        {lineTotal.toFixed(2)} {currency}
+                      </div>
+                    </td>
+                    <td>
+                      <div className="px-3 py-2.5 text-sm">
+                        {grossLineTotal.toFixed(2)} {currency}
+                        {taxRate > 0 && (
+                          <span className="text-xs opacity-70 block">
+                            (IVA {taxRate}%)
+                          </span>
+                        )}
+                      </div>
+                    </td>
+                    <td>
+                      <DangerButton
+                        type="button"
+                        onClick={() => removeItemRow(idx)}
+                        disabled={items.length === 1}
+                      >
+                        Eliminar
+                      </DangerButton>
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>

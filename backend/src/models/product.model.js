@@ -3,10 +3,24 @@ import { pool } from "../config/db.js";
 export const ProductModel = {
   async listByCompany(companyId) {
     const [rows] = await pool.execute(
-      `SELECT id, company_id, sku, name, brand, description, stock_qty, price, currency, is_active, created_at
-       FROM products
-       WHERE company_id = :companyId
-       ORDER BY id DESC`,
+      `SELECT 
+         p.id, 
+         p.company_id, 
+         p.sku, 
+         p.name, 
+         p.brand, 
+         p.description, 
+         p.stock_qty, 
+         p.price, 
+         p.currency, 
+         p.tax_id, 
+         p.is_active, 
+         p.created_at,
+         t.rate as tax_rate
+       FROM products p
+       LEFT JOIN taxes t ON p.tax_id = t.id AND t.is_active = 1
+       WHERE p.company_id = :companyId
+       ORDER BY p.id DESC`,
       { companyId }
     );
     return rows;
@@ -14,9 +28,23 @@ export const ProductModel = {
 
   async getById({ companyId, productId }) {
     const [rows] = await pool.execute(
-      `SELECT id, company_id, sku, name, brand, description, stock_qty, price, currency, is_active, created_at
-       FROM products
-       WHERE company_id = :companyId AND id = :productId
+      `SELECT 
+         p.id, 
+         p.company_id, 
+         p.sku, 
+         p.name, 
+         p.brand, 
+         p.description, 
+         p.stock_qty, 
+         p.price, 
+         p.currency, 
+         p.tax_id, 
+         p.is_active, 
+         p.created_at,
+         t.rate as tax_rate
+       FROM products p
+       LEFT JOIN taxes t ON p.tax_id = t.id AND t.is_active = 1
+       WHERE p.company_id = :companyId AND p.id = :productId
        LIMIT 1`,
       { companyId, productId }
     );

@@ -85,23 +85,30 @@ export const QuoteModel = {
     const header = headerRows[0];
     if (!header) return null;
 
-    // 2) Items
+    // 2) Items con tax information
     const [items] = await pool.execute(
       `
       SELECT
-        id,
-        product_id,
-        item_name,
-        brand,
-        quantity,
-        unit_price,
-        currency,
-        discount_pct,
-        line_total,
-        sort_order
-      FROM quote_items
-      WHERE quote_id = :quoteId
-      ORDER BY sort_order ASC, id ASC
+        qi.id,
+        qi.product_id,
+        qi.item_name,
+        qi.brand,
+        qi.quantity,
+        qi.unit_price,
+        qi.currency,
+        qi.discount_pct,
+        qi.line_total,
+        qi.sort_order,
+        t.id AS tax_id,
+        t.name AS tax_name,
+        t.rate AS tax_rate,
+        ROUND(qi.line_total * (COALESCE(t.rate, 0) / 100), 2) AS tax_amount,
+        ROUND(qi.line_total * (1 + COALESCE(t.rate, 0) / 100), 2) AS gross_line_total
+      FROM quote_items qi
+      LEFT JOIN products p ON p.id = qi.product_id
+      LEFT JOIN taxes t ON t.id = p.tax_id AND t.is_active = 1
+      WHERE qi.quote_id = :quoteId
+      ORDER BY qi.sort_order ASC, qi.id ASC
       `,
       { quoteId }
     );

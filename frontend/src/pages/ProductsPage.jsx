@@ -71,6 +71,7 @@ export default function ProductsPage() {
           <TableHeaderCell>Stock</TableHeaderCell>
           <TableHeaderCell>Precio</TableHeaderCell>
           <TableHeaderCell>Moneda</TableHeaderCell>
+          <TableHeaderCell>IVA</TableHeaderCell>
         </TableHeader>
         <TableBody>
           {filteredItems.map((p) => (
@@ -82,11 +83,16 @@ export default function ProductsPage() {
               <TableCell>{p.stock_qty}</TableCell>
               <TableCell>{p.price}</TableCell>
               <TableCell>{p.currency}</TableCell>
+              <TableCell>
+                {p.tax_rate !== null && p.tax_rate !== undefined
+                  ? `${p.tax_rate}%`
+                  : "-"}
+              </TableCell>
             </TableRow>
           ))}
           {!filteredItems.length && status === "succeeded" && (
             <TableRow>
-              <TableCell colSpan={7}>No hay productos aún.</TableCell>
+              <TableCell colSpan={8}>No hay productos aún.</TableCell>
             </TableRow>
           )}
         </TableBody>
