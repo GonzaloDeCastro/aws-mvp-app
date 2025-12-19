@@ -110,7 +110,6 @@ export default function QuoteDetailPage() {
     const doc = new jsPDF();
     const pageWidth = doc.internal.pageSize.getWidth();
     const margin = 14;
-    const contentWidth = pageWidth - margin * 2;
 
     doc.setFontSize(18);
     doc.setFont(undefined, "bold");
@@ -135,10 +134,10 @@ export default function QuoteDetailPage() {
 
     doc.setFontSize(10);
     doc.setFont(undefined, "normal");
-    currentY += 7;
-    doc.text(`Estado: ${quote.status}`, margin, currentY);
+    currentY += 4;
+
     if (quote.validUntil) {
-      currentY += 6;
+      currentY += 3;
       doc.text(
         `Válido hasta: ${new Date(quote.validUntil).toLocaleDateString()}`,
         margin,
@@ -147,22 +146,116 @@ export default function QuoteDetailPage() {
     }
 
     let y = currentY + 12;
+
+    // Sección Compañía (2 campos por fila)
     doc.setFontSize(11);
     doc.setFont(undefined, "bold");
-    doc.text("Compañía", margin, y);
-    doc.text("Cliente", margin + contentWidth / 2, y);
-    y += 7;
+    doc.text("Compañía Emisora", margin, y);
+    y += 5;
 
     doc.setFontSize(9);
-    doc.setFont(undefined, "normal");
-    doc.text(quote.company.name || "-", margin, y);
-    doc.text(quote.customer?.name || "-", margin + contentWidth / 2, y);
-    y += 5;
-    doc.text(quote.company.address || "-", margin, y);
-    doc.text(quote.customer?.address || "-", margin + contentWidth / 2, y);
-    y += 5;
-    doc.text(quote.company.email || "-", margin, y);
-    doc.text(quote.customer?.email || "-", margin + contentWidth / 2, y);
+    const colWidth = (pageWidth - margin * 2) / 2;
+    const leftColX = margin;
+    const rightColX = margin + colWidth + 10;
+    const labelSpacing = 2; // Espacio pequeño entre label y valor
+    let currentRowY = y;
+
+    // Función auxiliar para escribir label + valor
+    const writeLabelValue = (label, value, x, y) => {
+      doc.setFont(undefined, "bold");
+      doc.text(label, x, y);
+      const labelWidth = doc.getTextWidth(label);
+      doc.setFont(undefined, "normal");
+      doc.text(value || "-", x + labelWidth + labelSpacing, y);
+    };
+
+    // Fila 1: Compañía | CUIT
+    writeLabelValue("Compañía: ", quote.company.name, leftColX, currentRowY);
+    writeLabelValue("CUIT: ", quote.company.taxId, rightColX, currentRowY);
+    currentRowY += 5;
+
+    // Fila 2: Dirección | Teléfono
+    if (quote.company.address || quote.company.phone) {
+      if (quote.company.address) {
+        writeLabelValue(
+          "Dirección: ",
+          quote.company.address,
+          leftColX,
+          currentRowY
+        );
+      }
+      if (quote.company.phone) {
+        writeLabelValue(
+          "Teléfono: ",
+          quote.company.phone,
+          rightColX,
+          currentRowY
+        );
+      }
+      currentRowY += 5;
+    }
+
+    // Fila 3: Correo
+    if (quote.company.email) {
+      writeLabelValue("Correo: ", quote.company.email, leftColX, currentRowY);
+      currentRowY += 5;
+    }
+
+    y = currentRowY;
+
+    // Línea divisoria antes del cliente
+    y += 1;
+    doc.setDrawColor(200, 200, 200);
+    doc.line(margin, y, pageWidth - margin, y);
+    y += 8;
+
+    // Sección Cliente (2 campos por fila)
+    doc.setFontSize(11);
+    doc.setFont(undefined, "bold");
+
+    y += 0;
+
+    doc.setFontSize(9);
+    currentRowY = y;
+
+    // Fila 1: Cliente | CUIT
+    writeLabelValue("Cliente: ", quote.customer?.name, leftColX, currentRowY);
+    writeLabelValue("CUIT: ", quote.customer?.taxId, rightColX, currentRowY);
+    currentRowY += 5;
+
+    // Fila 2: Correo | Teléfono
+    if (quote.customer?.email || quote.customer?.phone) {
+      if (quote.customer?.email) {
+        writeLabelValue(
+          "Correo: ",
+          quote.customer.email,
+          leftColX,
+          currentRowY
+        );
+      }
+      if (quote.customer?.phone) {
+        writeLabelValue(
+          "Teléfono: ",
+          quote.customer.phone,
+          rightColX,
+          currentRowY
+        );
+      }
+      currentRowY += 5;
+    }
+
+    // Fila 3: Dirección (si existe)
+    if (quote.customer?.address) {
+      writeLabelValue(
+        "Dirección: ",
+        quote.customer.address,
+        leftColX,
+        currentRowY
+      );
+      currentRowY += 5;
+    }
+
+    y = currentRowY;
 
     const itemRows = quote.items.map((i) => {
       const discountPct = i.discount_pct || 0;
@@ -172,11 +265,11 @@ export default function QuoteDetailPage() {
       return [
         (i.item_name || "").substring(0, 25), // Limitar longitud del nombre
         String(i.quantity || 0),
-        Number(i.unit_price || 0).toFixed(2),
+        `${Number(i.unit_price || 0).toFixed(2)} ${quote.currency}`,
         discountPct > 0 ? `${discountPct}%` : "0%",
-        Number(i.line_total || 0).toFixed(2),
+        `${Number(i.line_total || 0).toFixed(2)} ${quote.currency}`,
         taxRate > 0 ? `${taxRate}%` : "-",
-        Number(grossLineTotal).toFixed(2),
+        `${Number(grossLineTotal).toFixed(2)} ${quote.currency}`,
       ];
     });
 
@@ -221,7 +314,7 @@ export default function QuoteDetailPage() {
     });
 
     const finalY = doc.lastAutoTable.finalY || y + 20;
-    let summaryY = finalY + 8;
+    let summaryY = finalY + 10;
 
     const summaryX = pageWidth - margin;
 
@@ -234,17 +327,28 @@ export default function QuoteDetailPage() {
       { align: "right" }
     );
 
+    // Primera línea divisoria (después de Total sin IVA)
+    summaryY += 5;
+    doc.setDrawColor(200, 200, 200);
+    doc.line(summaryX - 60, summaryY, summaryX, summaryY);
+    summaryY += 5;
+
     totals.ivaTotals.forEach((iva) => {
-      summaryY += 6;
       doc.text(
         `IVA ${iva.rate}%: ${iva.amount.toFixed(2)} ${quote.currency}`,
         summaryX,
         summaryY,
         { align: "right" }
       );
+      summaryY += 6;
     });
 
-    summaryY += 8;
+    // Segunda línea divisoria (después de IVAs, antes del Total)
+    summaryY += 2;
+    doc.setDrawColor(200, 200, 200);
+    doc.line(summaryX - 60, summaryY, summaryX, summaryY);
+    summaryY += 5;
+
     doc.setFontSize(11);
     doc.setFont(undefined, "bold");
     doc.text(

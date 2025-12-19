@@ -76,13 +76,15 @@ export const QuoteModel = {
         c.email AS company_email,
         c.phone AS company_phone,
         c.address AS company_address,
+        c.tax_id AS company_tax_id,
         c.logo AS company_logo,
 
         cu.id AS customer_id,
         cu.name AS customer_name,
         cu.email AS customer_email,
         cu.phone AS customer_phone,
-        cu.address AS customer_address
+        cu.address AS customer_address,
+        cu.tax_id AS customer_tax_id
 
       FROM quotes q
       JOIN companies c ON c.id = q.company_id
@@ -140,6 +142,7 @@ export const QuoteModel = {
         email: header.company_email,
         phone: header.company_phone,
         address: header.company_address,
+        taxId: header.company_tax_id,
         logo:
           header.company_logo && Buffer.isBuffer(header.company_logo)
             ? header.company_logo.toString("base64")
@@ -153,6 +156,7 @@ export const QuoteModel = {
             email: header.customer_email,
             phone: header.customer_phone,
             address: header.customer_address,
+            taxId: header.customer_tax_id,
           }
         : null,
 

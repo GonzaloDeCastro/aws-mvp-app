@@ -139,7 +139,6 @@ export default function CustomersPage() {
 
       <Table>
         <TableHeader>
-          <TableHeaderCell>ID</TableHeaderCell>
           <TableHeaderCell>Nombre</TableHeaderCell>
           <TableHeaderCell>Email</TableHeaderCell>
           <TableHeaderCell>Teléfono</TableHeaderCell>
@@ -149,7 +148,6 @@ export default function CustomersPage() {
         <TableBody>
           {rows.map((c) => (
             <TableRow key={c.id}>
-              <TableCell>{c.id}</TableCell>
               <TableCell>{c.name}</TableCell>
               <TableCell>{c.email || "-"}</TableCell>
               <TableCell>{c.phone || "-"}</TableCell>
@@ -159,7 +157,7 @@ export default function CustomersPage() {
           ))}
           {!rows.length && status === "succeeded" && (
             <TableRow>
-              <TableCell colSpan={6}>Todavía no hay clientes.</TableCell>
+              <TableCell colSpan={5}>Todavía no hay clientes.</TableCell>
             </TableRow>
           )}
         </TableBody>
