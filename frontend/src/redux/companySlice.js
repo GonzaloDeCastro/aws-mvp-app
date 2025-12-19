@@ -1,10 +1,18 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
-import { apiGet } from "../api";
+import { apiGet, apiPut } from "../api";
 
 export const fetchCompany = createAsyncThunk(
   "company/fetchCompany",
   async () => {
     const json = await apiGet("/company/me");
+    return json.data;
+  }
+);
+
+export const updateDollarRate = createAsyncThunk(
+  "company/updateDollarRate",
+  async (dollarRate) => {
+    const json = await apiPut("/company/dollar-rate", { dollarRate });
     return json.data;
   }
 );
@@ -30,6 +38,9 @@ const companySlice = createSlice({
       .addCase(fetchCompany.rejected, (state, action) => {
         state.status = "failed";
         state.error = action.error?.message || "Failed to load company";
+      })
+      .addCase(updateDollarRate.fulfilled, (state, action) => {
+        state.current = action.payload;
       });
   },
 });

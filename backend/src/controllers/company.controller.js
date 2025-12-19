@@ -121,4 +121,35 @@ export const CompanyController = {
       next(e);
     }
   },
+
+  async updateDollarRate(req, res, next) {
+    try {
+      const companyId = Number(req.user?.companyId);
+      if (!companyId) throw new HttpError(401, "Unauthorized");
+
+      const { dollarRate } = req.body;
+      if (dollarRate === undefined || dollarRate === null) {
+        throw new HttpError(400, "dollarRate is required");
+      }
+
+      const rate = Number(dollarRate);
+      if (!Number.isFinite(rate) || rate <= 0) {
+        throw new HttpError(400, "dollarRate must be a positive number");
+      }
+
+      await CompanyModel.updateDollarRate({ companyId, dollarRate: rate });
+
+      // Retornar la compañía actualizada
+      const company = await CompanyModel.getById(companyId);
+      if (!company) throw new HttpError(404, "Company not found");
+
+      const { logo, ...rest } = company;
+      const logoBase64 =
+        logo && Buffer.isBuffer(logo) ? logo.toString("base64") : null;
+
+      res.json({ ok: true, data: { ...rest, logo: logoBase64 } });
+    } catch (e) {
+      next(e);
+    }
+  },
 };

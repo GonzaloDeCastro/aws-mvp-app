@@ -1,9 +1,10 @@
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { apiPost } from "../api";
-import { fetchCompany } from "../redux/companySlice";
+import { fetchCompany, updateDollarRate } from "../redux/companySlice";
 import Card from "../components/ui/Card";
 import { PrimaryButton } from "../components/ui/Button";
+import Input from "../components/ui/Input";
 import Label from "../components/ui/Label";
 import Toolbar, { ToolbarTitle } from "../components/ui/Toolbar";
 import { InfoAlert, ErrorAlert } from "../components/ui/Alert";
@@ -16,12 +17,22 @@ export default function CompanyPage() {
   const [preview, setPreview] = useState(null);
   const [base64, setBase64] = useState(null);
   const [uploadError, setUploadError] = useState("");
+  const [dollarRate, setDollarRate] = useState("");
+  const [savingDollarRate, setSavingDollarRate] = useState(false);
+  const [dollarRateError, setDollarRateError] = useState("");
 
   useEffect(() => {
     if (status === "idle") {
       dispatch(fetchCompany());
     }
   }, [dispatch, status]);
+
+  // Sincronizar dollarRate cuando se carga la compañía
+  useEffect(() => {
+    if (company?.dollar_rate !== undefined) {
+      setDollarRate(String(company.dollar_rate));
+    }
+  }, [company]);
 
   const onFileChange = (e) => {
     const file = e.target.files?.[0];
@@ -103,6 +114,24 @@ export default function CompanyPage() {
     }
   };
 
+  const onSaveDollarRate = async () => {
+    const rate = Number(dollarRate);
+    if (!Number.isFinite(rate) || rate <= 0) {
+      setDollarRateError("El dólar referencia debe ser un número mayor a 0");
+      return;
+    }
+
+    try {
+      setSavingDollarRate(true);
+      setDollarRateError("");
+      await dispatch(updateDollarRate(rate)).unwrap();
+      setSavingDollarRate(false);
+    } catch (e) {
+      setSavingDollarRate(false);
+      setDollarRateError(e.message || "Error al guardar el dólar referencia");
+    }
+  };
+
   const effectiveLogo = preview
     ? preview
     : company?.logo
@@ -133,6 +162,39 @@ export default function CompanyPage() {
             <Label>Email</Label>
             <div className="px-3 py-2.5 rounded-xl border border-white/12 bg-[rgba(0,0,0,0.22)] text-[#e8eefc] text-sm">
               {company?.email || "-"}
+            </div>
+          </div>
+
+          <div>
+            <Label>Dólar Referencia (USD)</Label>
+            <div className="flex gap-2 items-start">
+              <Input
+                type="number"
+                min="0"
+                step="0.01"
+                value={dollarRate}
+                onChange={(e) => {
+                  setDollarRate(e.target.value);
+                  setDollarRateError("");
+                }}
+                className="flex-1"
+                placeholder="1470.00"
+              />
+              <PrimaryButton
+                onClick={onSaveDollarRate}
+                disabled={savingDollarRate || !dollarRate}
+              >
+                {savingDollarRate ? "Guardando..." : "Guardar"}
+              </PrimaryButton>
+            </div>
+            {dollarRateError && (
+              <ErrorAlert className="mt-2 text-xs py-2">
+                {dollarRateError}
+              </ErrorAlert>
+            )}
+            <div className="text-xs opacity-70 mt-1">
+              Este valor se usará para convertir precios en USD a ARS en los
+              presupuestos
             </div>
           </div>
 

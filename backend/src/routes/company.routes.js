@@ -10,5 +10,6 @@ router.post("/register", CompanyController.register);
 // Protected routes - require auth
 router.get("/me", authMiddleware, CompanyController.me);
 router.post("/logo", authMiddleware, CompanyController.uploadLogo);
+router.put("/dollar-rate", authMiddleware, CompanyController.updateDollarRate);
 
 export default router;

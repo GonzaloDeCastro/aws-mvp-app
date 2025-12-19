@@ -6,6 +6,7 @@ import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
 import ProductsPage from "./pages/ProductsPage";
 import ProductCreatePage from "./pages/ProductCreatePage";
+import ProductEditPage from "./pages/ProductEditPage";
 import QuotesPage from "./pages/QuotesPage";
 import QuoteDetailPage from "./pages/QuoteDetailPage";
 import NotFoundPage from "./pages/NotFoundPage";
@@ -25,6 +26,7 @@ export default function App() {
         <Route path="/app" element={<AppShell />}>
           <Route path="products" element={<ProductsPage />} />
           <Route path="products/new" element={<ProductCreatePage />} />
+          <Route path="products/:id/edit" element={<ProductEditPage />} />
           <Route path="quotes" element={<QuotesPage />} />
           <Route path="quotes/:id" element={<QuoteDetailPage />} />
           <Route path="quotes/new" element={<QuoteCreatePage />} />

@@ -1,6 +1,7 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchQuoteById } from "../redux/quotesSlice";
+import { fetchCompany } from "../redux/companySlice";
 import { useParams } from "react-router-dom";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
@@ -25,12 +26,19 @@ export default function QuoteDetailPage() {
   const status = useSelector((s) => s.quotes.statusById[quoteId] || "idle");
   const error = useSelector((s) => s.quotes.errorById[quoteId] || "");
 
+  const company = useSelector((s) => s.company.current);
+  const companyStatus = useSelector((s) => s.company.status);
+
   useEffect(() => {
     if (status === "idle") dispatch(fetchQuoteById(quoteId));
   }, [dispatch, quoteId, status]);
 
-  // Calcular totales (debe estar antes de los early returns para cumplir con las reglas de hooks)
-  const [dollarRate, setDollarRate] = useState(1470);
+  useEffect(() => {
+    if (companyStatus === "idle") dispatch(fetchCompany());
+  }, [dispatch, companyStatus]);
+
+  // Usar dollar_rate de la compañía, con fallback a 1470
+  const dollarRate = company?.dollar_rate || 1470;
 
   const totals = useMemo(() => {
     if (!quote || !quote.items) {
@@ -326,14 +334,13 @@ export default function QuoteDetailPage() {
     let summaryY = finalY + 10;
 
     const summaryX = pageWidth - margin;
-    const DOLLAR_RATE = 1470;
 
     // Dolar Referencia (izquierda)
     doc.setFontSize(9);
     doc.setFont(undefined, "normal");
     doc.text("Dolar Referencia:", margin, summaryY);
     doc.setFont(undefined, "bold");
-    doc.text(`${DOLLAR_RATE} USD`, 0 + 40, summaryY);
+    doc.text(`${dollarRate} USD`, 0 + 40, summaryY);
 
     // Total sin IVA (derecha)
     doc.setFont(undefined, "normal");

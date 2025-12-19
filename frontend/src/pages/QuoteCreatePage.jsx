@@ -2,6 +2,7 @@ import { useEffect, useState, useMemo } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchCustomers } from "../redux/customersSlice";
 import { fetchProducts } from "../redux/productsSlice";
+import { fetchCompany } from "../redux/companySlice";
 import { createQuote } from "../redux/quotesSlice";
 import { useNavigate } from "react-router-dom";
 import Card from "../components/ui/Card";
@@ -24,10 +25,14 @@ export default function QuoteCreatePage() {
   const products = useSelector((s) => s.products.items);
   const productsStatus = useSelector((s) => s.products.status);
 
+  const company = useSelector((s) => s.company.current);
+  const companyStatus = useSelector((s) => s.company.status);
+
   const [customerId, setCustomerId] = useState("");
   const [validUntil, setValidUntil] = useState("");
   const [notes, setNotes] = useState("");
-  const [dollarRate, setDollarRate] = useState(1470);
+  // Usar dollar_rate de la compañía, con fallback a 1470
+  const dollarRate = company?.dollar_rate || 1470;
 
   const [items, setItems] = useState([
     {
@@ -46,6 +51,10 @@ export default function QuoteCreatePage() {
   useEffect(() => {
     if (productsStatus === "idle") dispatch(fetchProducts());
   }, [dispatch, productsStatus]);
+
+  useEffect(() => {
+    if (companyStatus === "idle") dispatch(fetchCompany());
+  }, [dispatch, companyStatus]);
 
   const updateItem = (index, patch) => {
     setItems((prev) =>
@@ -388,14 +397,9 @@ export default function QuoteCreatePage() {
                 <Label className="text-xs opacity-80 mb-1">
                   Dolar Referencia:
                 </Label>
-                <Input
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  value={dollarRate}
-                  onChange={(e) => setDollarRate(Number(e.target.value) || 0)}
-                  className="w-24 text-sm"
-                />
+                <div className="px-3 py-2.5 rounded-xl border border-white/12 bg-[rgba(0,0,0,0.22)] text-[#e8eefc] text-sm w-24">
+                  {dollarRate}
+                </div>
               </div>
               <div className="w-full max-w-md space-y-2">
                 <div className="flex justify-between text-sm">

@@ -11,7 +11,22 @@ export const ProductModel = {
          p.brand, 
          p.description, 
          p.stock_qty, 
-         p.price, 
+         COALESCE(
+           CASE 
+             WHEN EXISTS (
+               SELECT 1 FROM product_components pc 
+               WHERE pc.parent_product_id = p.id
+             )
+             THEN (
+               SELECT SUM(comp.price * pc.qty)
+               FROM product_components pc
+               INNER JOIN products comp ON pc.component_product_id = comp.id
+               WHERE pc.parent_product_id = p.id
+             )
+             ELSE p.price
+           END,
+           p.price
+         ) as price,
          p.currency, 
          p.tax_id, 
          p.is_active, 
@@ -36,7 +51,22 @@ export const ProductModel = {
          p.brand, 
          p.description, 
          p.stock_qty, 
-         p.price, 
+         COALESCE(
+           CASE 
+             WHEN EXISTS (
+               SELECT 1 FROM product_components pc 
+               WHERE pc.parent_product_id = p.id
+             )
+             THEN (
+               SELECT SUM(comp.price * pc.qty)
+               FROM product_components pc
+               INNER JOIN products comp ON pc.component_product_id = comp.id
+               WHERE pc.parent_product_id = p.id
+             )
+             ELSE p.price
+           END,
+           p.price
+         ) as price,
          p.currency, 
          p.tax_id, 
          p.is_active, 
@@ -163,7 +193,8 @@ export const ProductModel = {
       }
 
       // Insertar componentes si existen
-      // Nota: Si tiene componentes, el precio se calculará automáticamente por el trigger
+      // Si tiene componentes, el precio se calculará dinámicamente en las consultas SELECT
+      // por lo que no necesitamos calcularlo ni actualizarlo aquí
       if (components && components.length > 0) {
         for (const comp of components) {
           await connection.execute(
@@ -172,10 +203,7 @@ export const ProductModel = {
             [productId, comp.id, comp.qty || 1]
           );
         }
-        // Llamar al stored procedure para recalcular el precio
-        await connection.execute(`CALL sp_recalc_composite_price(?)`, [
-          productId,
-        ]);
+        // No actualizar el precio aquí - se calcula dinámicamente en las consultas SELECT
       }
 
       await connection.commit();
@@ -207,19 +235,43 @@ export const ProductModel = {
     try {
       await connection.beginTransaction();
 
+      // Verificar si este producto tiene componentes
+      // Si tiene componentes, el precio se calcula dinámicamente en las consultas SELECT
+      // por lo que no necesitamos actualizarlo aquí
+      const [hasComponents] = await connection.execute(
+        `SELECT COUNT(*) as count FROM product_components WHERE parent_product_id = ?`,
+        [productId]
+      );
+      const isComposite = hasComponents[0]?.count > 0;
+
+      // Si se están actualizando componentes, verificar si será compuesto después
+      let willBeComposite = isComposite;
+      if (components !== undefined) {
+        willBeComposite = components.length > 0;
+      }
+
       // Actualizar producto
-      // Nota: Si tiene componentes, el precio se recalculará automáticamente por el trigger
+      // Si tiene componentes o los tendrá, NO actualizar el precio (se calcula dinámicamente)
+      // Si no tiene componentes, actualizar el precio normalmente
+      const updateFields = [
+        "sku = :sku",
+        "name = :name",
+        "brand = :brand",
+        "description = :description",
+        "stock_qty = :stockQty",
+        "currency = :currency",
+        "tax_id = :taxId",
+        "is_active = :isActive",
+      ];
+
+      // Solo incluir precio si NO es un producto compuesto
+      if (!willBeComposite) {
+        updateFields.push("price = :price");
+      }
+
       const [result] = await connection.execute(
         `UPDATE products
-         SET sku = :sku,
-             name = :name,
-             brand = :brand,
-             description = :description,
-             stock_qty = :stockQty,
-             price = :price,
-             currency = :currency,
-             tax_id = :taxId,
-             is_active = :isActive
+         SET ${updateFields.join(", ")}
          WHERE company_id = :companyId AND id = :productId`,
         {
           companyId,
@@ -229,7 +281,7 @@ export const ProductModel = {
           brand,
           description,
           stockQty,
-          price,
+          ...(willBeComposite ? {} : { price }),
           currency,
           taxId: taxId !== undefined ? taxId || null : undefined,
           isActive,
@@ -243,17 +295,37 @@ export const ProductModel = {
 
       // Actualizar categorías si se proporcionan
       if (categoryIds !== undefined) {
-        await this.setCategories(productId, categoryIds);
+        // Eliminar categorías existentes
+        await connection.execute(
+          `DELETE FROM product_categories WHERE product_id = ?`,
+          [productId]
+        );
+        // Insertar nuevas categorías
+        if (categoryIds && categoryIds.length > 0) {
+          for (const catId of categoryIds) {
+            await connection.execute(
+              `INSERT INTO product_categories (product_id, category_id) VALUES (?, ?)`,
+              [productId, catId]
+            );
+          }
+        }
       }
 
       // Actualizar componentes si se proporcionan
       if (components !== undefined) {
-        await this.setComponents(productId, components);
-        // Si tiene componentes, recalcular precio
-        if (components.length > 0) {
-          await connection.execute(`CALL sp_recalc_composite_price(?)`, [
-            productId,
-          ]);
+        // Eliminar componentes existentes
+        await connection.execute(
+          `DELETE FROM product_components WHERE parent_product_id = ?`,
+          [productId]
+        );
+        // Insertar nuevos componentes
+        if (components && components.length > 0) {
+          for (const comp of components) {
+            await connection.execute(
+              `INSERT INTO product_components (parent_product_id, component_product_id, qty) VALUES (?, ?, ?)`,
+              [productId, comp.id, comp.qty || 1]
+            );
+          }
         }
       }
 

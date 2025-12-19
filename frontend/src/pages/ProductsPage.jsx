@@ -2,7 +2,11 @@ import { useEffect, useMemo, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { fetchProducts, deleteProduct } from "../redux/productsSlice";
-import { PrimaryButton, DangerButton } from "../components/ui/Button";
+import {
+  PrimaryButton,
+  DangerButton,
+  SecondaryButton,
+} from "../components/ui/Button";
 import Toolbar, {
   ToolbarTitle,
   ToolbarActions,
@@ -56,7 +60,7 @@ export default function ProductsPage() {
       setDeleteModal({ open: false, productId: null, productName: "" });
     }
   };
-
+  console.log("filteredItems", filteredItems);
   return (
     <div className="grid gap-3">
       <Toolbar>
@@ -104,18 +108,28 @@ export default function ProductsPage() {
                       : "-"}
                   </TableCell>
                   <TableCell>
-                    <DangerButton
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setDeleteModal({
-                          open: true,
-                          productId: p.id,
-                          productName: p.name,
-                        });
-                      }}
-                    >
-                      Eliminar
-                    </DangerButton>
+                    <div className="flex gap-2">
+                      <SecondaryButton
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          navigate(`/app/products/${p.id}/edit`);
+                        }}
+                      >
+                        Editar
+                      </SecondaryButton>
+                      <DangerButton
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setDeleteModal({
+                            open: true,
+                            productId: p.id,
+                            productName: p.name,
+                          });
+                        }}
+                      >
+                        Eliminar
+                      </DangerButton>
+                    </div>
                   </TableCell>
                 </TableRow>
               ))}
