@@ -66,7 +66,9 @@ export default function QuoteCreatePage() {
     const p = products.find((prod) => prod.id === Number(productId));
     const patch = { productId };
     if (p) {
-      patch.unitPrice = p.price;
+      // Formatear el precio a 2 decimales
+      const price = Number(p.price) || 0;
+      patch.unitPrice = price.toFixed(2);
       patch.taxRate = p.tax_rate || null;
       patch.itemCurrency = p.currency; // Guardar la moneda del producto
     } else {
@@ -250,57 +252,54 @@ export default function QuoteCreatePage() {
         </div>
 
         <div className="w-full overflow-x-auto">
-          <table
-            className="w-full border-collapse text-sm"
-            style={{ tableLayout: "fixed" }}
-          >
+          <table className="w-full border-collapse text-sm">
             <thead>
               <tr>
                 <th
-                  className="text-left text-xs opacity-80 py-3 px-3 border-b border-white/8"
-                  style={{ width: "25%" }}
+                  className="text-left text-xs opacity-80 py-3 px-2 border-b border-white/8"
+                  style={{ width: "30%" }}
                 >
                   Producto
                 </th>
                 <th
-                  className="text-left text-xs opacity-80 py-3 px-3 border-b border-white/8"
+                  className="text-left text-xs opacity-80 py-3 px-2 border-b border-white/8"
                   style={{ width: "8%" }}
                 >
                   Cantidad
                 </th>
                 <th
-                  className="text-left text-xs opacity-80 py-3 px-3 border-b border-white/8"
-                  style={{ width: "10%" }}
+                  className="text-left text-xs opacity-80 py-3 px-2 border-b border-white/8"
+                  style={{ width: "15%" }}
                 >
                   Precio unitario
                 </th>
                 <th
-                  className="text-left text-xs opacity-80 py-3 px-3 border-b border-white/8"
-                  style={{ width: "8%" }}
+                  className="text-left text-xs opacity-80 py-3 px-2 border-b border-white/8"
+                  style={{ width: "10%" }}
                 >
                   Descuento %
                 </th>
                 <th
-                  className="text-left text-xs opacity-80 py-3 px-3 border-b border-white/8"
+                  className="text-left text-xs opacity-80 py-3 px-2 border-b border-white/8"
                   style={{ width: "12%" }}
                 >
                   Sub Total sin IVA
                 </th>
                 <th
-                  className="text-left text-xs opacity-80 py-3 px-3 border-b border-white/8"
-                  style={{ width: "7%" }}
+                  className="text-left text-xs opacity-80 py-3 px-2 border-b border-white/8"
+                  style={{ width: "6%" }}
                 >
                   IVA
                 </th>
                 <th
-                  className="text-left text-xs opacity-80 py-3 px-3 border-b border-white/8"
+                  className="text-left text-xs opacity-80 py-3 px-2 border-b border-white/8"
                   style={{ width: "12%" }}
                 >
                   Sub Total con IVA
                 </th>
                 <th
-                  className="text-left text-xs opacity-80 py-3 px-3 border-b border-white/8"
-                  style={{ width: "18%" }}
+                  className="text-left text-xs opacity-80 py-3 px-2 border-b border-white/8"
+                  style={{ width: "7%" }}
                 >
                   Acciones
                 </th>
@@ -324,8 +323,8 @@ export default function QuoteCreatePage() {
                 );
 
                 return (
-                  <tr key={idx}>
-                    <td>
+                  <tr key={idx} className="border-b border-white/5">
+                    <td className="px-2 py-2">
                       <Select
                         className="w-full"
                         value={it.productId}
@@ -341,7 +340,7 @@ export default function QuoteCreatePage() {
                         ))}
                       </Select>
                     </td>
-                    <td>
+                    <td className="px-2 py-2">
                       <Input
                         type="number"
                         min="1"
@@ -349,26 +348,53 @@ export default function QuoteCreatePage() {
                         onChange={(e) =>
                           updateItem(idx, { quantity: e.target.value })
                         }
+                        className="w-full"
                       />
                     </td>
-                    <td>
-                      <div className="flex items-center gap-1">
+                    <td className="px-2 py-2">
+                      <div className="flex items-center gap-1.5">
                         <Input
                           type="number"
                           min="0"
                           step="0.01"
-                          value={it.unitPrice}
-                          onChange={(e) =>
-                            updateItem(idx, { unitPrice: e.target.value })
+                          value={
+                            it.unitPrice === "" || it.unitPrice === undefined
+                              ? ""
+                              : Number(it.unitPrice).toFixed(2)
                           }
-                          className="flex-1"
+                          onChange={(e) => {
+                            let value = e.target.value;
+                            // Limitar a 2 decimales
+                            if (value !== "") {
+                              value = value.replace(/[^\d.]/g, "");
+                              const parts = value.split(".");
+                              if (parts.length > 2) {
+                                value =
+                                  parts[0] + "." + parts.slice(1).join("");
+                              }
+                              if (parts.length === 2 && parts[1].length > 2) {
+                                value =
+                                  parts[0] + "." + parts[1].substring(0, 2);
+                              }
+                            }
+                            updateItem(idx, { unitPrice: value });
+                          }}
+                          onBlur={(e) => {
+                            if (e.target.value) {
+                              const num = Number(e.target.value);
+                              if (!isNaN(num)) {
+                                updateItem(idx, { unitPrice: num.toFixed(2) });
+                              }
+                            }
+                          }}
+                          className="flex-1 min-w-0"
                         />
-                        <span className="text-xs opacity-70 whitespace-nowrap">
+                        <span className="text-xs opacity-70 whitespace-nowrap flex-shrink-0">
                           {it.itemCurrency || "ARS"}
                         </span>
                       </div>
                     </td>
-                    <td>
+                    <td className="px-2 py-2">
                       <Input
                         type="number"
                         min="0"
@@ -378,28 +404,30 @@ export default function QuoteCreatePage() {
                         onChange={(e) =>
                           updateItem(idx, { discountPct: e.target.value })
                         }
+                        className="w-full"
                       />
                     </td>
-                    <td>
-                      <div className="px-3 py-2.5 text-sm">
+                    <td className="px-2 py-2">
+                      <div className="text-sm whitespace-nowrap">
                         {lineTotal.toFixed(2)} {it.itemCurrency || "ARS"}
                       </div>
                     </td>
-                    <td>
-                      <div className="px-3 py-2.5 text-sm">
+                    <td className="px-2 py-2">
+                      <div className="text-sm whitespace-nowrap">
                         {taxRate > 0 ? `${taxRate}%` : "-"}
                       </div>
                     </td>
-                    <td>
-                      <div className="px-3 py-2.5 text-sm">
+                    <td className="px-2 py-2">
+                      <div className="text-sm whitespace-nowrap">
                         {grossLineTotal.toFixed(2)} {it.itemCurrency || "ARS"}
                       </div>
                     </td>
-                    <td>
+                    <td className="px-2 py-2">
                       <DangerButton
                         type="button"
                         onClick={() => removeItemRow(idx)}
                         disabled={items.length === 1}
+                        className="w-full"
                       >
                         Eliminar
                       </DangerButton>
