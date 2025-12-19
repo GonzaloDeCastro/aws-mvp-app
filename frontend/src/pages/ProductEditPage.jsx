@@ -8,6 +8,7 @@ import {
   fetchProducts,
   fetchTaxes,
   createCategory,
+  resetUpdateStatus,
 } from "../redux/productsSlice";
 import { fetchCompany } from "../redux/companySlice";
 import Card from "../components/ui/Card";
@@ -58,6 +59,11 @@ export default function ProductEditPage() {
   const [newCategoryName, setNewCategoryName] = useState("");
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(true);
+
+  // Resetear el estado cuando se monta el componente
+  useEffect(() => {
+    dispatch(resetUpdateStatus());
+  }, [dispatch]);
 
   // Cargar datos iniciales
   useEffect(() => {

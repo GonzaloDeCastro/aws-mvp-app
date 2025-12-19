@@ -50,7 +50,12 @@ const customersSlice = createSlice({
     createStatus: "idle",
     createError: "",
   },
-  reducers: {},
+  reducers: {
+    resetCreateStatus: (state) => {
+      state.createStatus = "idle";
+      state.createError = "";
+    },
+  },
   extraReducers: (builder) => {
     builder
       // list
@@ -111,5 +116,7 @@ const customersSlice = createSlice({
       });
   },
 });
+
+export const { resetCreateStatus } = customersSlice.actions;
 
 export default customersSlice.reducer;

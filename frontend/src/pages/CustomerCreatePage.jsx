@@ -1,7 +1,7 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
-import { createCustomer } from "../redux/customersSlice";
+import { createCustomer, resetCreateStatus } from "../redux/customersSlice";
 import Card from "../components/ui/Card";
 import { PrimaryButton } from "../components/ui/Button";
 import Input from "../components/ui/Input";
@@ -11,6 +11,11 @@ import { ErrorAlert } from "../components/ui/Alert";
 export default function CustomerCreatePage() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
+
+  // Resetear el estado cuando se monta el componente
+  useEffect(() => {
+    dispatch(resetCreateStatus());
+  }, [dispatch]);
 
   const { createStatus, createError } = useSelector((s) => s.customers);
 

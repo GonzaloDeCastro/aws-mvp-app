@@ -1,10 +1,10 @@
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate, useParams } from "react-router-dom";
 import { fetchCustomers } from "../redux/customersSlice";
 import { fetchProducts } from "../redux/productsSlice";
 import { fetchCompany } from "../redux/companySlice";
-import { fetchQuoteById, updateQuote } from "../redux/quotesSlice";
+import { fetchQuoteById, updateQuote, fetchQuotes } from "../redux/quotesSlice";
 import Card from "../components/ui/Card";
 import {
   PrimaryButton,
@@ -41,6 +41,9 @@ export default function QuoteEditPage() {
   // Usar dollar_rate_used del presupuesto si existe (fijo), sino el actual de la compañía
   const dollarRate = quote?.dollarRateUsed || company?.dollar_rate || 1470;
 
+  // Bandera para evitar que el useEffect sobrescriba los cambios del usuario
+  const dataLoadedRef = useRef(false);
+
   const [items, setItems] = useState([
     {
       productId: "",
@@ -69,9 +72,9 @@ export default function QuoteEditPage() {
     }
   }, [dispatch, quoteId, quoteStatus]);
 
-  // Cargar datos del quote cuando esté disponible
+  // Cargar datos del quote cuando esté disponible (solo una vez)
   useEffect(() => {
-    if (quote) {
+    if (quote && !dataLoadedRef.current && products.length > 0) {
       setCustomerId(quote.customer?.id ? String(quote.customer.id) : "");
       setValidUntil(
         quote.validUntil
@@ -95,6 +98,7 @@ export default function QuoteEditPage() {
         });
         setItems(formattedItems);
       }
+      dataLoadedRef.current = true;
     }
   }, [quote, products]);
 
@@ -218,6 +222,9 @@ export default function QuoteEditPage() {
       })
     ).unwrap();
 
+    // Recargar la lista de presupuestos para reflejar los cambios
+    await dispatch(fetchQuotes());
+
     navigate(`/app/quotes/${quoteId}`);
   };
 
@@ -225,6 +232,14 @@ export default function QuoteEditPage() {
     customersStatus === "loading" ||
     productsStatus === "loading" ||
     quoteStatus === "loading";
+
+  // Validar si hay items válidos para habilitar el botón
+  const hasValidItems = useMemo(() => {
+    return items.some(
+      (it) =>
+        it.productId && Number(it.quantity) > 0 && Number(it.unitPrice) >= 0
+    );
+  }, [items]);
 
   if (quoteStatus === "loading" || !quote) {
     return <div className="text-[#e8eefc]">Cargando presupuesto...</div>;
@@ -240,7 +255,10 @@ export default function QuoteEditPage() {
               Editar presupuesto #{quote.quoteNumber}
             </h2>
           </div>
-          <PrimaryButton onClick={onUpdate} disabled={isLoadingLookups}>
+          <PrimaryButton
+            onClick={onUpdate}
+            disabled={isLoadingLookups || !hasValidItems}
+          >
             {isLoadingLookups ? "Cargando..." : "Guardar"}
           </PrimaryButton>
         </div>

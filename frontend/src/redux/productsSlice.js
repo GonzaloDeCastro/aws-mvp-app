@@ -80,6 +80,14 @@ const productsSlice = createSlice({
     clearCurrentProduct: (state) => {
       state.currentProduct = null;
     },
+    resetCreateStatus: (state) => {
+      state.createStatus = "idle";
+      state.createError = "";
+    },
+    resetUpdateStatus: (state) => {
+      state.updateStatus = "idle";
+      state.updateError = "";
+    },
   },
   extraReducers: (builder) => {
     builder
@@ -150,6 +158,7 @@ const productsSlice = createSlice({
   },
 });
 
-export const { clearCurrentProduct } = productsSlice.actions;
+export const { clearCurrentProduct, resetCreateStatus, resetUpdateStatus } =
+  productsSlice.actions;
 
 export default productsSlice.reducer;

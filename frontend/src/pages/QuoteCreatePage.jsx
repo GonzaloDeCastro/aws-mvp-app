@@ -3,7 +3,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { fetchCustomers } from "../redux/customersSlice";
 import { fetchProducts } from "../redux/productsSlice";
 import { fetchCompany } from "../redux/companySlice";
-import { createQuote } from "../redux/quotesSlice";
+import { createQuote, fetchQuotes } from "../redux/quotesSlice";
 import { useNavigate } from "react-router-dom";
 import Card from "../components/ui/Card";
 import {
@@ -176,11 +176,22 @@ export default function QuoteCreatePage() {
       })
     ).unwrap();
 
+    // Recargar la lista de presupuestos para reflejar los cambios
+    await dispatch(fetchQuotes());
+
     navigate(`/app/quotes/${data.id}`);
   };
 
   const isLoadingLookups =
     customersStatus === "loading" || productsStatus === "loading";
+
+  // Validar si hay items válidos para habilitar el botón
+  const hasValidItems = useMemo(() => {
+    return items.some(
+      (it) =>
+        it.productId && Number(it.quantity) > 0 && Number(it.unitPrice) >= 0
+    );
+  }, [items]);
 
   return (
     <div className="grid gap-3">
@@ -190,7 +201,10 @@ export default function QuoteCreatePage() {
             <div className="text-[11px] opacity-70">Presupuestos</div>
             <h2 className="m-0 text-lg">Nuevo presupuesto</h2>
           </div>
-          <PrimaryButton onClick={onCreate} disabled={isLoadingLookups}>
+          <PrimaryButton
+            onClick={onCreate}
+            disabled={isLoadingLookups || !hasValidItems}
+          >
             {isLoadingLookups ? "Cargando..." : "Crear"}
           </PrimaryButton>
         </div>

@@ -1,7 +1,11 @@
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate, useParams } from "react-router-dom";
-import { fetchCustomerById, updateCustomer } from "../redux/customersSlice";
+import {
+  fetchCustomerById,
+  updateCustomer,
+  resetCreateStatus,
+} from "../redux/customersSlice";
 import Card from "../components/ui/Card";
 import { PrimaryButton } from "../components/ui/Button";
 import Input from "../components/ui/Input";
@@ -13,6 +17,11 @@ export default function CustomerEditPage() {
   const navigate = useNavigate();
   const { id } = useParams();
   const customerId = Number(id);
+
+  // Resetear el estado cuando se monta el componente
+  useEffect(() => {
+    dispatch(resetCreateStatus());
+  }, [dispatch]);
 
   const customer = useSelector((s) =>
     s.customers.items.find((c) => c.id === customerId)

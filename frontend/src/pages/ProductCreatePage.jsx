@@ -7,6 +7,7 @@ import {
   fetchProducts,
   fetchTaxes,
   createCategory,
+  resetCreateStatus,
 } from "../redux/productsSlice";
 import { fetchCompany } from "../redux/companySlice";
 import Card from "../components/ui/Card";
@@ -24,6 +25,11 @@ import { ErrorAlert, InfoAlert } from "../components/ui/Alert";
 export default function ProductCreatePage() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
+
+  // Resetear el estado cuando se monta el componente
+  useEffect(() => {
+    dispatch(resetCreateStatus());
+  }, [dispatch]);
 
   const {
     createStatus,
