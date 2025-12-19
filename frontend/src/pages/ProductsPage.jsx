@@ -100,7 +100,12 @@ export default function ProductsPage() {
                   <TableCell>{p.name}</TableCell>
                   <TableCell>{p.brand || "-"}</TableCell>
                   <TableCell>{p.stock_qty}</TableCell>
-                  <TableCell>{p.price}</TableCell>
+                  <TableCell>
+                    {new Intl.NumberFormat("es-ES", {
+                      minimumFractionDigits: 2,
+                      maximumFractionDigits: 2,
+                    }).format(p.price)}
+                  </TableCell>
                   <TableCell>{p.currency}</TableCell>
                   <TableCell>
                     {p.tax_rate !== null && p.tax_rate !== undefined

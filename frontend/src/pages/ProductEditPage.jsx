@@ -9,6 +9,7 @@ import {
   fetchTaxes,
   createCategory,
 } from "../redux/productsSlice";
+import { fetchCompany } from "../redux/companySlice";
 import Card from "../components/ui/Card";
 import Modal from "../components/ui/Modal";
 import Toolbar, {
@@ -35,6 +36,9 @@ export default function ProductEditPage() {
     taxes,
     items: products,
   } = useSelector((s) => s.products);
+
+  const company = useSelector((s) => s.company.current);
+  const companyStatus = useSelector((s) => s.company.status);
 
   const [form, setForm] = useState({
     sku: "",
@@ -66,6 +70,9 @@ export default function ProductEditPage() {
           dispatch(fetchProducts()),
           dispatch(fetchTaxes()),
         ]);
+        if (companyStatus === "idle") {
+          dispatch(fetchCompany());
+        }
       } catch (error) {
         console.error("Error loading product:", error);
       } finally {
@@ -76,7 +83,7 @@ export default function ProductEditPage() {
     if (productId) {
       loadData();
     }
-  }, [dispatch, productId]);
+  }, [dispatch, productId, companyStatus]);
 
   // Pre-llenar formulario cuando se carga el producto
   useEffect(() => {
@@ -100,7 +107,21 @@ export default function ProductEditPage() {
   }, [currentProduct]);
 
   const set = (k) => (e) => {
-    const value = e.target.value;
+    let value = e.target.value;
+    // Para campos numéricos de precio, limitar a 2 decimales
+    if (k === "price" && value !== "") {
+      // Permitir solo números y un punto decimal
+      value = value.replace(/[^\d.]/g, "");
+      // Limitar a un solo punto
+      const parts = value.split(".");
+      if (parts.length > 2) {
+        value = parts[0] + "." + parts.slice(1).join("");
+      }
+      // Limitar decimales a 2
+      if (parts.length === 2 && parts[1].length > 2) {
+        value = parts[0] + "." + parts[1].substring(0, 2);
+      }
+    }
     setForm((v) => ({ ...v, [k]: value }));
     // Limpiar error del campo cuando el usuario empieza a escribir
     if (errors[k]) {
@@ -175,13 +196,21 @@ export default function ProductEditPage() {
   );
 
   // Calcular precio automáticamente cuando hay componentes
+  // Convertir USD a ARS usando el dólar referencia
+  const dollarRate = company?.dollar_rate || 1470;
   const calculatedPrice = useMemo(() => {
     if (!hasComponents) return form.price;
     return form.components.reduce((sum, comp) => {
       const product = products.find((p) => p.id === comp.id);
-      return sum + (product?.price || 0) * comp.qty;
+      if (!product) return sum;
+      let compPrice = product.price || 0;
+      // Si el componente está en USD, convertir a ARS
+      if (product.currency === "USD") {
+        compPrice = compPrice * dollarRate;
+      }
+      return sum + compPrice * comp.qty;
     }, 0);
-  }, [form.components, form.price, hasComponents, products]);
+  }, [form.components, form.price, hasComponents, products, dollarRate]);
 
   // Actualizar precio cuando se agregan/quitan componentes o cambian las cantidades
   const componentsKey = JSON.stringify(
@@ -243,7 +272,7 @@ export default function ProductEditPage() {
           description: form.description.trim() || null,
           stockQty: Number(form.stockQty) || 0,
           price: hasComponents ? calculatedPrice : Number(form.price) || 0,
-          currency: form.currency || "ARS",
+          currency: hasComponents ? "ARS" : form.currency || "ARS",
           taxId: form.taxId ? Number(form.taxId) : null,
           categoryIds: form.categoryId ? [Number(form.categoryId)] : [],
           components: form.components,
@@ -390,12 +419,27 @@ export default function ProductEditPage() {
               type="number"
               min="0"
               step="0.01"
-              value={hasComponents ? calculatedPrice.toFixed(2) : form.price}
+              value={
+                hasComponents
+                  ? calculatedPrice.toFixed(2)
+                  : form.price === "" || form.price === undefined
+                  ? ""
+                  : Number(form.price).toFixed(2)
+              }
               onChange={set("price")}
               disabled={hasComponents}
               placeholder={hasComponents ? "Se calcula desde componentes" : ""}
               readOnly={hasComponents}
               className={errors.price ? "border-red-500/50" : ""}
+              onBlur={(e) => {
+                // Al perder el foco, asegurar que tenga máximo 2 decimales
+                if (e.target.value && !hasComponents) {
+                  const num = Number(e.target.value);
+                  if (!isNaN(num)) {
+                    setForm((v) => ({ ...v, price: num.toFixed(2) }));
+                  }
+                }
+              }}
             />
             {errors.price && (
               <div className="text-xs text-red-400 mt-1">{errors.price}</div>
@@ -404,11 +448,20 @@ export default function ProductEditPage() {
 
           <div className="w-full">
             <Label>Moneda</Label>
-            <Select value={form.currency} onChange={set("currency")}>
+            <Select
+              value={hasComponents ? "ARS" : form.currency}
+              onChange={set("currency")}
+              disabled={hasComponents}
+            >
               <option value="ARS">ARS</option>
               <option value="USD">USD</option>
               <option value="EUR">EUR</option>
             </Select>
+            {hasComponents && (
+              <div className="text-xs opacity-70 mt-1">
+                Los productos compuestos siempre están en ARS
+              </div>
+            )}
           </div>
 
           <div className="w-full">
@@ -451,7 +504,7 @@ export default function ProductEditPage() {
                   {availableProducts.map((p) => (
                     <option key={p.id} value={p.id}>
                       {p.name} {p.description ? `- ${p.description}` : ""} - $
-                      {p.price} {p.currency}
+                      {Number(p.price || 0).toFixed(2)} {p.currency}
                     </option>
                   ))}
                 </Select>
@@ -498,7 +551,8 @@ export default function ProductEditPage() {
                         )}
                         <div className="text-xs opacity-60">
                           {product.brand ? `${product.brand} - ` : ""}$
-                          {product.price} {product.currency} c/u
+                          {Number(product.price || 0).toFixed(2)}{" "}
+                          {product.currency} c/u
                         </div>
                       </div>
                       <div className="flex items-center gap-1.5 flex-shrink-0">
@@ -520,7 +574,15 @@ export default function ProductEditPage() {
                         <div className="flex flex-col items-end gap-0.5">
                           <div className="text-xs opacity-50">Total</div>
                           <div className="text-xs font-medium opacity-90 w-16 text-right">
-                            ${(Number(comp.qty) * product.price).toFixed(2)}
+                            $
+                            {(() => {
+                              let compPrice = product.price || 0;
+                              // Si el componente está en USD, convertir a ARS
+                              if (product.currency === "USD") {
+                                compPrice = compPrice * dollarRate;
+                              }
+                              return (Number(comp.qty) * compPrice).toFixed(2);
+                            })()}
                           </div>
                         </div>
                         <button
@@ -540,10 +602,16 @@ export default function ProductEditPage() {
                   {form.components
                     .reduce((sum, comp) => {
                       const product = products.find((p) => p.id === comp.id);
-                      return sum + (product?.price || 0) * comp.qty;
+                      if (!product) return sum;
+                      let compPrice = product.price || 0;
+                      // Si el componente está en USD, convertir a ARS
+                      if (product.currency === "USD") {
+                        compPrice = compPrice * dollarRate;
+                      }
+                      return sum + compPrice * comp.qty;
                     }, 0)
                     .toFixed(2)}{" "}
-                  {form.currency}
+                  ARS
                 </div>
               </div>
             )}

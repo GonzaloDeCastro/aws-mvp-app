@@ -338,15 +338,21 @@ export default function QuoteCreatePage() {
                       />
                     </td>
                     <td>
-                      <Input
-                        type="number"
-                        min="0"
-                        step="0.01"
-                        value={it.unitPrice}
-                        onChange={(e) =>
-                          updateItem(idx, { unitPrice: e.target.value })
-                        }
-                      />
+                      <div className="flex items-center gap-1">
+                        <Input
+                          type="number"
+                          min="0"
+                          step="0.01"
+                          value={it.unitPrice}
+                          onChange={(e) =>
+                            updateItem(idx, { unitPrice: e.target.value })
+                          }
+                          className="flex-1"
+                        />
+                        <span className="text-xs opacity-70 whitespace-nowrap">
+                          {it.itemCurrency || "ARS"}
+                        </span>
+                      </div>
                     </td>
                     <td>
                       <Input

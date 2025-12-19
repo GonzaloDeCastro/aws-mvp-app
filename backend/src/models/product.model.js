@@ -2,6 +2,13 @@ import { pool } from "../config/db.js";
 
 export const ProductModel = {
   async listByCompany(companyId) {
+    // Primero obtener el dollar_rate de la compañía
+    const [companyRows] = await pool.execute(
+      `SELECT dollar_rate FROM companies WHERE id = ? LIMIT 1`,
+      [companyId]
+    );
+    const dollarRate = companyRows[0]?.dollar_rate || 1470;
+
     const [rows] = await pool.execute(
       `SELECT 
          p.id, 
@@ -18,7 +25,13 @@ export const ProductModel = {
                WHERE pc.parent_product_id = p.id
              )
              THEN (
-               SELECT SUM(comp.price * pc.qty)
+               SELECT SUM(
+                 CASE 
+                   WHEN comp.currency = 'USD' 
+                   THEN comp.price * pc.qty * :dollarRate
+                   ELSE comp.price * pc.qty
+                 END
+               )
                FROM product_components pc
                INNER JOIN products comp ON pc.component_product_id = comp.id
                WHERE pc.parent_product_id = p.id
@@ -27,7 +40,14 @@ export const ProductModel = {
            END,
            p.price
          ) as price,
-         p.currency, 
+         CASE 
+           WHEN EXISTS (
+             SELECT 1 FROM product_components pc 
+             WHERE pc.parent_product_id = p.id
+           )
+           THEN 'ARS'
+           ELSE p.currency
+         END as currency,
          p.tax_id, 
          p.is_active, 
          p.created_at,
@@ -36,12 +56,19 @@ export const ProductModel = {
        LEFT JOIN taxes t ON p.tax_id = t.id AND t.is_active = 1
        WHERE p.company_id = :companyId
        ORDER BY p.id DESC`,
-      { companyId }
+      { companyId, dollarRate }
     );
     return rows;
   },
 
   async getById({ companyId, productId }) {
+    // Primero obtener el dollar_rate de la compañía
+    const [companyRows] = await pool.execute(
+      `SELECT dollar_rate FROM companies WHERE id = ? LIMIT 1`,
+      [companyId]
+    );
+    const dollarRate = companyRows[0]?.dollar_rate || 1470;
+
     const [rows] = await pool.execute(
       `SELECT 
          p.id, 
@@ -58,7 +85,13 @@ export const ProductModel = {
                WHERE pc.parent_product_id = p.id
              )
              THEN (
-               SELECT SUM(comp.price * pc.qty)
+               SELECT SUM(
+                 CASE 
+                   WHEN comp.currency = 'USD' 
+                   THEN comp.price * pc.qty * :dollarRate
+                   ELSE comp.price * pc.qty
+                 END
+               )
                FROM product_components pc
                INNER JOIN products comp ON pc.component_product_id = comp.id
                WHERE pc.parent_product_id = p.id
@@ -67,7 +100,14 @@ export const ProductModel = {
            END,
            p.price
          ) as price,
-         p.currency, 
+         CASE 
+           WHEN EXISTS (
+             SELECT 1 FROM product_components pc 
+             WHERE pc.parent_product_id = p.id
+           )
+           THEN 'ARS'
+           ELSE p.currency
+         END as currency,
          p.tax_id, 
          p.is_active, 
          p.created_at,
@@ -76,7 +116,7 @@ export const ProductModel = {
        LEFT JOIN taxes t ON p.tax_id = t.id AND t.is_active = 1
        WHERE p.company_id = :companyId AND p.id = :productId
        LIMIT 1`,
-      { companyId, productId }
+      { companyId, productId, dollarRate }
     );
     return rows[0] ?? null;
   },
@@ -160,6 +200,10 @@ export const ProductModel = {
     try {
       await connection.beginTransaction();
 
+      // Si tiene componentes, el producto compuesto siempre debe estar en ARS
+      const finalCurrency =
+        components && components.length > 0 ? "ARS" : currency;
+
       // Insertar producto
       const [result] = await connection.execute(
         `INSERT INTO products (company_id, sku, name, brand, description, stock_qty, price, currency, tax_id)
@@ -172,7 +216,7 @@ export const ProductModel = {
           description,
           stockQty,
           price,
-          currency,
+          currency: finalCurrency,
           taxId: taxId || null,
         }
       );
@@ -250,6 +294,9 @@ export const ProductModel = {
         willBeComposite = components.length > 0;
       }
 
+      // Si tiene componentes o los tendrá, el producto compuesto siempre debe estar en ARS
+      const finalCurrency = willBeComposite ? "ARS" : currency;
+
       // Actualizar producto
       // Si tiene componentes o los tendrá, NO actualizar el precio (se calcula dinámicamente)
       // Si no tiene componentes, actualizar el precio normalmente
@@ -282,7 +329,7 @@ export const ProductModel = {
           description,
           stockQty,
           ...(willBeComposite ? {} : { price }),
-          currency,
+          currency: finalCurrency,
           taxId: taxId !== undefined ? taxId || null : undefined,
           isActive,
         }

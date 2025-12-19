@@ -1,7 +1,6 @@
 import { useEffect, useMemo } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchQuoteById } from "../redux/quotesSlice";
-import { fetchCompany } from "../redux/companySlice";
 import { useParams } from "react-router-dom";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
@@ -26,19 +25,12 @@ export default function QuoteDetailPage() {
   const status = useSelector((s) => s.quotes.statusById[quoteId] || "idle");
   const error = useSelector((s) => s.quotes.errorById[quoteId] || "");
 
-  const company = useSelector((s) => s.company.current);
-  const companyStatus = useSelector((s) => s.company.status);
-
   useEffect(() => {
     if (status === "idle") dispatch(fetchQuoteById(quoteId));
   }, [dispatch, quoteId, status]);
 
-  useEffect(() => {
-    if (companyStatus === "idle") dispatch(fetchCompany());
-  }, [dispatch, companyStatus]);
-
-  // Usar dollar_rate de la compañía, con fallback a 1470
-  const dollarRate = company?.dollar_rate || 1470;
+  // Calcular totales (debe estar antes de los early returns para cumplir con las reglas de hooks)
+  const dollarRate = 1470; // TODO: Obtener desde Redux cuando se implemente
 
   const totals = useMemo(() => {
     if (!quote || !quote.items) {
@@ -101,6 +93,28 @@ export default function QuoteDetailPage() {
     return <div className="text-[#e8eefc]">Cargando presupuesto…</div>;
   if (status === "failed") return <div className="text-[crimson]">{error}</div>;
   if (!quote) return null;
+
+  // Función helper para formatear números: punto para miles, coma para decimales
+  const formatNumber = (num) => {
+    const value = Number(num);
+    if (isNaN(value)) return "0";
+
+    // Separar parte entera y decimal
+    const parts = value.toFixed(2).split(".");
+    const integerPart = parts[0];
+    const decimalPart = parts[1];
+
+    // Agregar puntos como separadores de miles
+    const formattedInteger = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+
+    // Si los decimales son "00", no mostrarlos
+    if (decimalPart === "00") {
+      return formattedInteger;
+    }
+
+    // Si no, mostrar con coma
+    return `${formattedInteger},${decimalPart}`;
+  };
 
   const loadImageAsDataUrl = (url) =>
     new Promise((resolve, reject) => {
@@ -278,15 +292,17 @@ export default function QuoteDetailPage() {
       const discountPct = i.discount_pct || 0;
       const taxRate = i.tax_rate || 0;
       const grossLineTotal = i.gross_line_total || i.line_total;
+      // Usar la moneda original del item, no la del presupuesto
+      const itemCurrency = i.currency || quote.currency;
 
       return [
         (i.item_name || "").substring(0, 25), // Limitar longitud del nombre
         String(i.quantity || 0),
-        `${Number(i.unit_price || 0).toFixed(2)} ${quote.currency}`,
+        `${formatNumber(i.unit_price || 0)} ${itemCurrency}`,
         discountPct > 0 ? `${discountPct}%` : "0%",
-        `${Number(i.line_total || 0).toFixed(2)} ${quote.currency}`,
+        `${formatNumber(i.line_total || 0)} ${itemCurrency}`,
         taxRate > 0 ? `${taxRate}%` : "-",
-        `${Number(grossLineTotal).toFixed(2)} ${quote.currency}`,
+        `${formatNumber(grossLineTotal)} ${itemCurrency}`,
       ];
     });
 
@@ -334,18 +350,19 @@ export default function QuoteDetailPage() {
     let summaryY = finalY + 10;
 
     const summaryX = pageWidth - margin;
+    const DOLLAR_RATE = 1470;
 
     // Dolar Referencia (izquierda)
     doc.setFontSize(9);
     doc.setFont(undefined, "normal");
     doc.text("Dolar Referencia:", margin, summaryY);
     doc.setFont(undefined, "bold");
-    doc.text(`${dollarRate} USD`, 0 + 40, summaryY);
+    doc.text(`${DOLLAR_RATE} USD`, 0 + 40, summaryY);
 
     // Total sin IVA (derecha)
     doc.setFont(undefined, "normal");
     doc.text(
-      `Total sin IVA: ${totals.totalSinIva.toFixed(2)} ARS`,
+      `Total sin IVA: ${formatNumber(totals.totalSinIva)} ARS`,
       summaryX,
       summaryY,
       { align: "right" }
@@ -359,7 +376,7 @@ export default function QuoteDetailPage() {
 
     totals.ivaTotals.forEach((iva) => {
       doc.text(
-        `IVA ${iva.rate}%: ${iva.amount.toFixed(2)} ARS`,
+        `IVA ${iva.rate}%: ${formatNumber(iva.amount)} ARS`,
         summaryX,
         summaryY,
         { align: "right" }
@@ -376,7 +393,7 @@ export default function QuoteDetailPage() {
     doc.setFontSize(11);
     doc.setFont(undefined, "bold");
     doc.text(
-      `Total: ${totals.totalConIva.toFixed(2)} ARS`,
+      `Total: ${formatNumber(totals.totalConIva)} ARS`,
       summaryX,
       summaryY,
       { align: "right" }
@@ -481,18 +498,23 @@ export default function QuoteDetailPage() {
                   <tr key={i.id}>
                     <td className="px-3 py-2.5">{i.item_name}</td>
                     <td className="px-3 py-2.5">{i.quantity}</td>
-                    <td className="px-3 py-2.5">{i.unit_price}</td>
+                    <td className="px-3 py-2.5">
+                      {Number(i.unit_price || 0).toFixed(2)}{" "}
+                      {i.currency || quote.currency}
+                    </td>
                     <td className="px-3 py-2.5">
                       {discountPct > 0 ? `${discountPct}%` : "0%"}
                     </td>
                     <td className="px-3 py-2.5">
-                      {Number(i.line_total).toFixed(2)} {quote.currency}
+                      {Number(i.line_total).toFixed(2)}{" "}
+                      {i.currency || quote.currency}
                     </td>
                     <td className="px-3 py-2.5">
                       {taxRate > 0 ? `${taxRate}%` : "-"}
                     </td>
                     <td className="px-3 py-2.5">
-                      {Number(grossLineTotal).toFixed(2)} {quote.currency}
+                      {Number(grossLineTotal).toFixed(2)}{" "}
+                      {i.currency || quote.currency}
                     </td>
                   </tr>
                 );
