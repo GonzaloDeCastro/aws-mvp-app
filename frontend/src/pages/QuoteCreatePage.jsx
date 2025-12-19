@@ -227,30 +227,60 @@ export default function QuoteCreatePage() {
           <SecondaryButton onClick={addItemRow}>Agregar ítem</SecondaryButton>
         </div>
 
-        <div className="overflow-x-auto">
-          <table className="w-full border-collapse text-sm">
+        <div className="w-full overflow-x-auto">
+          <table
+            className="w-full border-collapse text-sm"
+            style={{ tableLayout: "fixed" }}
+          >
             <thead>
               <tr>
-                <th className="text-left text-xs opacity-80 py-3 px-3 border-b border-white/8">
+                <th
+                  className="text-left text-xs opacity-80 py-3 px-3 border-b border-white/8"
+                  style={{ width: "25%" }}
+                >
                   Producto
                 </th>
-                <th className="text-left text-xs opacity-80 py-3 px-3 border-b border-white/8">
+                <th
+                  className="text-left text-xs opacity-80 py-3 px-3 border-b border-white/8"
+                  style={{ width: "8%" }}
+                >
                   Cantidad
                 </th>
-                <th className="text-left text-xs opacity-80 py-3 px-3 border-b border-white/8">
+                <th
+                  className="text-left text-xs opacity-80 py-3 px-3 border-b border-white/8"
+                  style={{ width: "10%" }}
+                >
                   Precio unitario
                 </th>
-                <th className="text-left text-xs opacity-80 py-3 px-3 border-b border-white/8">
+                <th
+                  className="text-left text-xs opacity-80 py-3 px-3 border-b border-white/8"
+                  style={{ width: "8%" }}
+                >
                   Descuento %
                 </th>
-                <th className="text-left text-xs opacity-80 py-3 px-3 border-b border-white/8">
+                <th
+                  className="text-left text-xs opacity-80 py-3 px-3 border-b border-white/8"
+                  style={{ width: "12%" }}
+                >
                   Sub Total sin IVA
                 </th>
-                <th className="text-left text-xs opacity-80 py-3 px-3 border-b border-white/8">
+                <th
+                  className="text-left text-xs opacity-80 py-3 px-3 border-b border-white/8"
+                  style={{ width: "7%" }}
+                >
                   IVA
                 </th>
-                <th className="text-left text-xs opacity-80 py-3 px-3 border-b border-white/8">
+                <th
+                  className="text-left text-xs opacity-80 py-3 px-3 border-b border-white/8"
+                  style={{ width: "12%" }}
+                >
                   Sub Total con IVA
+                </th>
+                <th
+                  className="text-left text-xs opacity-80 py-3 px-3 border-b border-white/8"
+                  style={{ width: "18%" }}
+                >
+                  Acciones
                 </th>
               </tr>
             </thead>

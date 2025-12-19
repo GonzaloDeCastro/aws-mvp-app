@@ -109,7 +109,7 @@ export default function QuoteDetailPage() {
   const exportPdf = async () => {
     const doc = new jsPDF();
     const pageWidth = doc.internal.pageSize.getWidth();
-    const margin = 10;
+    const margin = 14;
     const contentWidth = pageWidth - margin * 2;
 
     doc.setFontSize(18);
@@ -118,7 +118,7 @@ export default function QuoteDetailPage() {
 
     if (quote.company.logo) {
       try {
-        const logoWidth = 35;
+        const logoWidth = 55;
         const logoX = pageWidth - margin - logoWidth;
 
         const imgData = await loadImageAsDataUrl(
@@ -210,12 +210,12 @@ export default function QuoteDetailPage() {
       alternateRowStyles: { fillColor: [245, 245, 245] },
       columnStyles: {
         0: { cellWidth: 45, halign: "left" },
-        1: { cellWidth: 16, halign: "center" },
-        2: { cellWidth: 22, halign: "right" },
-        3: { cellWidth: 18, halign: "center" },
-        4: { cellWidth: 28, halign: "right" },
-        5: { cellWidth: 18, halign: "center" },
-        6: { cellWidth: 28, halign: "right" },
+        1: { cellWidth: 16, halign: "left" },
+        2: { cellWidth: 22, halign: "left" },
+        3: { cellWidth: 18, halign: "left" },
+        4: { cellWidth: 33, halign: "left" },
+        5: { cellWidth: 18, halign: "left" },
+        6: { cellWidth: 33, halign: "left" },
       },
       theme: "striped",
     });
@@ -292,29 +292,53 @@ export default function QuoteDetailPage() {
           </div>
         </div>
 
-        <div className="overflow-x-auto">
-          <table className="w-full border-collapse text-sm">
+        <div className="w-full overflow-x-auto">
+          <table
+            className="w-full border-collapse text-sm"
+            style={{ tableLayout: "fixed" }}
+          >
             <thead>
               <tr>
-                <th className="text-left text-xs opacity-80 py-3 px-3 border-b border-white/8">
+                <th
+                  className="text-left text-xs opacity-80 py-3 px-3 border-b border-white/8"
+                  style={{ width: "30%" }}
+                >
                   Ítem
                 </th>
-                <th className="text-left text-xs opacity-80 py-3 px-3 border-b border-white/8">
+                <th
+                  className="text-left text-xs opacity-80 py-3 px-3 border-b border-white/8"
+                  style={{ width: "10%" }}
+                >
                   Cantidad
                 </th>
-                <th className="text-left text-xs opacity-80 py-3 px-3 border-b border-white/8">
+                <th
+                  className="text-left text-xs opacity-80 py-3 px-3 border-b border-white/8"
+                  style={{ width: "12%" }}
+                >
                   Precio unitario
                 </th>
-                <th className="text-left text-xs opacity-80 py-3 px-3 border-b border-white/8">
+                <th
+                  className="text-left text-xs opacity-80 py-3 px-3 border-b border-white/8"
+                  style={{ width: "10%" }}
+                >
                   Descuento %
                 </th>
-                <th className="text-left text-xs opacity-80 py-3 px-3 border-b border-white/8">
+                <th
+                  className="text-left text-xs opacity-80 py-3 px-3 border-b border-white/8"
+                  style={{ width: "14%" }}
+                >
                   Sub Total sin IVA
                 </th>
-                <th className="text-left text-xs opacity-80 py-3 px-3 border-b border-white/8">
+                <th
+                  className="text-left text-xs opacity-80 py-3 px-3 border-b border-white/8"
+                  style={{ width: "8%" }}
+                >
                   IVA
                 </th>
-                <th className="text-left text-xs opacity-80 py-3 px-3 border-b border-white/8">
+                <th
+                  className="text-left text-xs opacity-80 py-3 px-3 border-b border-white/8"
+                  style={{ width: "16%" }}
+                >
                   Sub Total con IVA
                 </th>
               </tr>
