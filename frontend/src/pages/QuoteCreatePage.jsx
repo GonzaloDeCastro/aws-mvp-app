@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchCustomers } from "../redux/customersSlice";
 import { fetchProducts } from "../redux/productsSlice";
@@ -81,6 +81,55 @@ export default function QuoteCreatePage() {
   const removeItemRow = (index) => {
     setItems((prev) => prev.filter((_, idx) => idx !== index));
   };
+
+  // Calcular totales
+  const totals = useMemo(() => {
+    let totalSinIva = 0;
+    const ivaGroups = {};
+
+    items.forEach((it) => {
+      const quantity = Number(it.quantity) || 0;
+      const unitPrice = Number(it.unitPrice) || 0;
+      const discountPct = Number(it.discountPct) || 0;
+      const taxRate =
+        it.taxRate !== null && it.taxRate !== undefined
+          ? Number(it.taxRate)
+          : 0;
+
+      const gross = quantity * unitPrice;
+      const discount = gross * (discountPct / 100);
+      const lineTotal = Number((gross - discount).toFixed(2));
+
+      totalSinIva += lineTotal;
+
+      if (taxRate > 0) {
+        const taxAmount = Number((lineTotal * (taxRate / 100)).toFixed(2));
+        if (!ivaGroups[taxRate]) {
+          ivaGroups[taxRate] = 0;
+        }
+        ivaGroups[taxRate] += taxAmount;
+      }
+    });
+
+    // Redondear totales de IVA
+    const ivaTotals = Object.keys(ivaGroups).map((rate) => ({
+      rate: Number(rate),
+      amount: Number(ivaGroups[rate].toFixed(2)),
+    }));
+
+    // Ordenar por tasa de IVA (mayor a menor)
+    ivaTotals.sort((a, b) => b.rate - a.rate);
+
+    // Calcular total con IVA
+    const totalIva = ivaTotals.reduce((sum, item) => sum + item.amount, 0);
+    const totalConIva = Number((totalSinIva + totalIva).toFixed(2));
+
+    return {
+      totalSinIva: Number(totalSinIva.toFixed(2)),
+      ivaTotals,
+      totalConIva,
+    };
+  }, [items]);
 
   const onCreate = async () => {
     const preparedItems = items
@@ -195,10 +244,10 @@ export default function QuoteCreatePage() {
                   Descuento %
                 </th>
                 <th className="text-left text-xs opacity-80 py-3 px-3 border-b border-white/8">
-                  Total
+                  Sub Total sin IVA
                 </th>
                 <th className="text-left text-xs opacity-80 py-3 px-3 border-b border-white/8">
-                  Total con IVA
+                  Sub Total con IVA
                 </th>
                 <th className="text-left text-xs opacity-80 py-3 px-3 border-b border-white/8">
                   Acciones
@@ -218,9 +267,6 @@ export default function QuoteCreatePage() {
                 const gross = quantity * unitPrice;
                 const discount = gross * (discountPct / 100);
                 const lineTotal = Number((gross - discount).toFixed(2));
-                const taxAmount = Number(
-                  (lineTotal * (taxRate / 100)).toFixed(2)
-                );
                 const grossLineTotal = Number(
                   (lineTotal * (1 + taxRate / 100)).toFixed(2)
                 );
@@ -305,6 +351,36 @@ export default function QuoteCreatePage() {
               })}
             </tbody>
           </table>
+
+          {/* Resumen de totales */}
+          <div className="mt-4 pt-4 border-t border-white/12">
+            <div className="flex justify-end">
+              <div className="w-full max-w-md space-y-2">
+                <div className="flex justify-between text-sm">
+                  <span className="opacity-80">Total sin IVA:</span>
+                  <span className="font-medium">
+                    {totals.totalSinIva.toFixed(2)} {currency}
+                  </span>
+                </div>
+
+                {totals.ivaTotals.map((iva) => (
+                  <div key={iva.rate} className="flex justify-between text-sm">
+                    <span className="opacity-80">IVA {iva.rate}%:</span>
+                    <span className="font-medium">
+                      {iva.amount.toFixed(2)} {currency}
+                    </span>
+                  </div>
+                ))}
+
+                <div className="flex justify-between text-base font-semibold pt-2 border-t border-white/12">
+                  <span>Total:</span>
+                  <span>
+                    {totals.totalConIva.toFixed(2)} {currency}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </Card>
     </div>
