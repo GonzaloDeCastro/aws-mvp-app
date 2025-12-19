@@ -17,4 +17,43 @@
   body {
     min-width: 320px;
   }
+
+  /* Estilos para el dropdown del select */
+  select {
+    background-color: rgba(0, 0, 0, 0.22);
+    color: #e8eefc;
+  }
+
+  select option {
+    background-color: #0b1220 !important;
+    color: #e8eefc !important;
+    padding: 8px 12px;
+  }
+
+  select:focus option:checked {
+    background-color: rgba(120, 160, 255, 0.3) !important;
+    color: #e8eefc !important;
+  }
+
+  select option:hover {
+    background-color: rgba(120, 160, 255, 0.2) !important;
+  }
+
+  /* Para navegadores que soportan ::-webkit-scrollbar en select */
+  select::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  select::-webkit-scrollbar-track {
+    background: #0b1220;
+  }
+
+  select::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 4px;
+  }
+
+  select::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.3);
+  }
 }

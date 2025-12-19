@@ -18,6 +18,7 @@ import Table, {
 } from "../components/ui/Table";
 import SearchInput from "../components/ui/SearchInput";
 import { InfoAlert, ErrorAlert } from "../components/ui/Alert";
+import Pagination from "../components/ui/Pagination";
 
 function NewCustomerModal({ open, onClose, onSubmit, loading }) {
   const initialForm = {
@@ -137,31 +138,35 @@ export default function CustomersPage() {
       {status === "loading" && <InfoAlert>Cargando clientes...</InfoAlert>}
       {error && <ErrorAlert>{error}</ErrorAlert>}
 
-      <Table>
-        <TableHeader>
-          <TableHeaderCell>Nombre</TableHeaderCell>
-          <TableHeaderCell>Email</TableHeaderCell>
-          <TableHeaderCell>Teléfono</TableHeaderCell>
-          <TableHeaderCell>CUIT/CUIL</TableHeaderCell>
-          <TableHeaderCell>Dirección</TableHeaderCell>
-        </TableHeader>
-        <TableBody>
-          {rows.map((c) => (
-            <TableRow key={c.id}>
-              <TableCell>{c.name}</TableCell>
-              <TableCell>{c.email || "-"}</TableCell>
-              <TableCell>{c.phone || "-"}</TableCell>
-              <TableCell>{c.tax_id || "-"}</TableCell>
-              <TableCell>{c.address || "-"}</TableCell>
-            </TableRow>
-          ))}
-          {!rows.length && status === "succeeded" && (
-            <TableRow>
-              <TableCell colSpan={5}>Todavía no hay clientes.</TableCell>
-            </TableRow>
-          )}
-        </TableBody>
-      </Table>
+      <Pagination data={rows}>
+        {(paginatedRows) => (
+          <Table>
+            <TableHeader>
+              <TableHeaderCell>Nombre</TableHeaderCell>
+              <TableHeaderCell>Email</TableHeaderCell>
+              <TableHeaderCell>Teléfono</TableHeaderCell>
+              <TableHeaderCell>CUIT/CUIL</TableHeaderCell>
+              <TableHeaderCell>Dirección</TableHeaderCell>
+            </TableHeader>
+            <TableBody>
+              {paginatedRows.map((c) => (
+                <TableRow key={c.id}>
+                  <TableCell>{c.name}</TableCell>
+                  <TableCell>{c.email || "-"}</TableCell>
+                  <TableCell>{c.phone || "-"}</TableCell>
+                  <TableCell>{c.tax_id || "-"}</TableCell>
+                  <TableCell>{c.address || "-"}</TableCell>
+                </TableRow>
+              ))}
+              {!rows.length && status === "succeeded" && (
+                <TableRow>
+                  <TableCell colSpan={5}>Todavía no hay clientes.</TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        )}
+      </Pagination>
 
       {createError && <ErrorAlert>{createError}</ErrorAlert>}
 

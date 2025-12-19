@@ -16,6 +16,7 @@ import Table, {
 } from "../components/ui/Table";
 import SearchInput from "../components/ui/SearchInput";
 import { InfoAlert, ErrorAlert } from "../components/ui/Alert";
+import Pagination from "../components/ui/Pagination";
 
 export default function QuotesPage() {
   const dispatch = useDispatch();
@@ -67,46 +68,50 @@ export default function QuotesPage() {
       )}
       {listStatus === "failed" && <ErrorAlert>{listError}</ErrorAlert>}
 
-      <Table>
-        <TableHeader>
-          <TableHeaderCell>#</TableHeaderCell>
-          <TableHeaderCell>Estado</TableHeaderCell>
-          <TableHeaderCell>Cliente</TableHeaderCell>
-          <TableHeaderCell>Válido hasta</TableHeaderCell>
-          <TableHeaderCell>Creado</TableHeaderCell>
-          <TableHeaderCell>Total</TableHeaderCell>
-        </TableHeader>
-        <TableBody>
-          {filteredList.map((q) => (
-            <TableRow
-              key={q.id}
-              onClick={() => navigate(`/app/quotes/${q.id}`)}
-            >
-              <TableCell>{q.quoteNumber}</TableCell>
-              <TableCell>{q.status}</TableCell>
-              <TableCell>{q.customer?.name || "-"}</TableCell>
-              <TableCell>
-                {q.validUntil
-                  ? new Date(q.validUntil).toLocaleDateString()
-                  : "-"}
-              </TableCell>
-              <TableCell>
-                {q.createdAt ? new Date(q.createdAt).toLocaleString() : "-"}
-              </TableCell>
-              <TableCell>
-                {q.totalWithTax
-                  ? `${Number(q.totalWithTax).toFixed(2)} ${q.currency}`
-                  : "-"}
-              </TableCell>
-            </TableRow>
-          ))}
-          {!filteredList.length && listStatus === "succeeded" && (
-            <TableRow>
-              <TableCell colSpan={6}>No hay presupuestos aún.</TableCell>
-            </TableRow>
-          )}
-        </TableBody>
-      </Table>
+      <Pagination data={filteredList}>
+        {(paginatedList) => (
+          <Table>
+            <TableHeader>
+              <TableHeaderCell>#</TableHeaderCell>
+              <TableHeaderCell>Estado</TableHeaderCell>
+              <TableHeaderCell>Cliente</TableHeaderCell>
+              <TableHeaderCell>Válido hasta</TableHeaderCell>
+              <TableHeaderCell>Creado</TableHeaderCell>
+              <TableHeaderCell>Total</TableHeaderCell>
+            </TableHeader>
+            <TableBody>
+              {paginatedList.map((q) => (
+                <TableRow
+                  key={q.id}
+                  onClick={() => navigate(`/app/quotes/${q.id}`)}
+                >
+                  <TableCell>{q.quoteNumber}</TableCell>
+                  <TableCell>{q.status}</TableCell>
+                  <TableCell>{q.customer?.name || "-"}</TableCell>
+                  <TableCell>
+                    {q.validUntil
+                      ? new Date(q.validUntil).toLocaleDateString()
+                      : "-"}
+                  </TableCell>
+                  <TableCell>
+                    {q.createdAt ? new Date(q.createdAt).toLocaleString() : "-"}
+                  </TableCell>
+                  <TableCell>
+                    {q.totalWithTax
+                      ? `${Number(q.totalWithTax).toFixed(2)} ${q.currency}`
+                      : "-"}
+                  </TableCell>
+                </TableRow>
+              ))}
+              {!filteredList.length && listStatus === "succeeded" && (
+                <TableRow>
+                  <TableCell colSpan={6}>No hay presupuestos aún.</TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        )}
+      </Pagination>
     </div>
   );
 }

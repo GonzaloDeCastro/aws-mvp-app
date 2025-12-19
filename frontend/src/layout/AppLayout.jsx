@@ -6,6 +6,7 @@ import { useNavigate } from "react-router-dom";
 import { logout } from "../redux/authSlice";
 import { fetchCompany } from "../redux/companySlice";
 import { CiLogout } from "react-icons/ci";
+import ConfirmModal from "../components/ui/ConfirmModal";
 
 export default function AppLayout({ children }) {
   const dispatch = useDispatch();
@@ -14,18 +15,23 @@ export default function AppLayout({ children }) {
   const company = useSelector((s) => s.company.current);
   const companyStatus = useSelector((s) => s.company.status);
 
-  const onLogout = () => {
-    dispatch(logout());
-    navigate("/login", { replace: true });
-  };
-
   const [collapsed, setCollapsed] = useState(false);
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
+
+  const onLogout = () => {
+    setShowLogoutModal(true);
+  };
 
   useEffect(() => {
     if (companyStatus === "idle") {
       dispatch(fetchCompany());
     }
   }, [dispatch, companyStatus]);
+
+  const handleLogoutConfirm = () => {
+    dispatch(logout());
+    navigate("/login", { replace: true });
+  };
 
   return (
     <div className="flex h-screen bg-[#0b1220] text-[#e8eefc] font-[system-ui,-apple-system,'Segoe UI',Roboto,Arial]">
@@ -146,6 +152,17 @@ export default function AppLayout({ children }) {
       <main className="flex-1 p-4 flex flex-col gap-3 min-h-0 overflow-auto">
         <section className="p-1">{children}</section>
       </main>
+
+      <ConfirmModal
+        open={showLogoutModal}
+        onClose={() => setShowLogoutModal(false)}
+        onConfirm={handleLogoutConfirm}
+        title="Cerrar sesión"
+        message="¿Estás seguro de que deseas cerrar sesión?"
+        confirmText="Cerrar sesión"
+        cancelText="Cancelar"
+        confirmVariant="danger"
+      />
     </div>
   );
 }

@@ -16,6 +16,7 @@ import Table, {
 } from "../components/ui/Table";
 import SearchInput from "../components/ui/SearchInput";
 import { InfoAlert, ErrorAlert } from "../components/ui/Alert";
+import Pagination from "../components/ui/Pagination";
 
 export default function ProductsPage() {
   const dispatch = useDispatch();
@@ -62,39 +63,43 @@ export default function ProductsPage() {
       {status === "loading" && <InfoAlert>Cargando productos...</InfoAlert>}
       {error && <ErrorAlert>{error}</ErrorAlert>}
 
-      <Table>
-        <TableHeader>
-          <TableHeaderCell>SKU</TableHeaderCell>
-          <TableHeaderCell>Nombre</TableHeaderCell>
-          <TableHeaderCell>Marca</TableHeaderCell>
-          <TableHeaderCell>Stock</TableHeaderCell>
-          <TableHeaderCell>Precio</TableHeaderCell>
-          <TableHeaderCell>Moneda</TableHeaderCell>
-          <TableHeaderCell>IVA</TableHeaderCell>
-        </TableHeader>
-        <TableBody>
-          {filteredItems.map((p) => (
-            <TableRow key={p.id}>
-              <TableCell>{p.sku || "-"}</TableCell>
-              <TableCell>{p.name}</TableCell>
-              <TableCell>{p.brand || "-"}</TableCell>
-              <TableCell>{p.stock_qty}</TableCell>
-              <TableCell>{p.price}</TableCell>
-              <TableCell>{p.currency}</TableCell>
-              <TableCell>
-                {p.tax_rate !== null && p.tax_rate !== undefined
-                  ? `${p.tax_rate}%`
-                  : "-"}
-              </TableCell>
-            </TableRow>
-          ))}
-          {!filteredItems.length && status === "succeeded" && (
-            <TableRow>
-              <TableCell colSpan={7}>No hay productos aún.</TableCell>
-            </TableRow>
-          )}
-        </TableBody>
-      </Table>
+      <Pagination data={filteredItems}>
+        {(paginatedItems) => (
+          <Table>
+            <TableHeader>
+              <TableHeaderCell>SKU</TableHeaderCell>
+              <TableHeaderCell>Nombre</TableHeaderCell>
+              <TableHeaderCell>Marca</TableHeaderCell>
+              <TableHeaderCell>Stock</TableHeaderCell>
+              <TableHeaderCell>Precio</TableHeaderCell>
+              <TableHeaderCell>Moneda</TableHeaderCell>
+              <TableHeaderCell>IVA</TableHeaderCell>
+            </TableHeader>
+            <TableBody>
+              {paginatedItems.map((p) => (
+                <TableRow key={p.id}>
+                  <TableCell>{p.sku || "-"}</TableCell>
+                  <TableCell>{p.name}</TableCell>
+                  <TableCell>{p.brand || "-"}</TableCell>
+                  <TableCell>{p.stock_qty}</TableCell>
+                  <TableCell>{p.price}</TableCell>
+                  <TableCell>{p.currency}</TableCell>
+                  <TableCell>
+                    {p.tax_rate !== null && p.tax_rate !== undefined
+                      ? `${p.tax_rate}%`
+                      : "-"}
+                  </TableCell>
+                </TableRow>
+              ))}
+              {!filteredItems.length && status === "succeeded" && (
+                <TableRow>
+                  <TableCell colSpan={7}>No hay productos aún.</TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        )}
+      </Pagination>
     </div>
   );
 }
