@@ -64,7 +64,6 @@ export default function ProductsPage() {
 
       <Table>
         <TableHeader>
-          <TableHeaderCell>ID</TableHeaderCell>
           <TableHeaderCell>SKU</TableHeaderCell>
           <TableHeaderCell>Nombre</TableHeaderCell>
           <TableHeaderCell>Marca</TableHeaderCell>
@@ -76,7 +75,6 @@ export default function ProductsPage() {
         <TableBody>
           {filteredItems.map((p) => (
             <TableRow key={p.id}>
-              <TableCell>{p.id}</TableCell>
               <TableCell>{p.sku || "-"}</TableCell>
               <TableCell>{p.name}</TableCell>
               <TableCell>{p.brand || "-"}</TableCell>
@@ -92,7 +90,7 @@ export default function ProductsPage() {
           ))}
           {!filteredItems.length && status === "succeeded" && (
             <TableRow>
-              <TableCell colSpan={8}>No hay productos aún.</TableCell>
+              <TableCell colSpan={7}>No hay productos aún.</TableCell>
             </TableRow>
           )}
         </TableBody>

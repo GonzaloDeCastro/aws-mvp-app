@@ -247,10 +247,10 @@ export default function QuoteCreatePage() {
                   Sub Total sin IVA
                 </th>
                 <th className="text-left text-xs opacity-80 py-3 px-3 border-b border-white/8">
-                  Sub Total con IVA
+                  IVA
                 </th>
                 <th className="text-left text-xs opacity-80 py-3 px-3 border-b border-white/8">
-                  Acciones
+                  Sub Total con IVA
                 </th>
               </tr>
             </thead>
@@ -329,12 +329,12 @@ export default function QuoteCreatePage() {
                     </td>
                     <td>
                       <div className="px-3 py-2.5 text-sm">
+                        {taxRate > 0 ? `${taxRate}%` : "-"}
+                      </div>
+                    </td>
+                    <td>
+                      <div className="px-3 py-2.5 text-sm">
                         {grossLineTotal.toFixed(2)} {currency}
-                        {taxRate > 0 && (
-                          <span className="text-xs opacity-70 block">
-                            (IVA {taxRate}%)
-                          </span>
-                        )}
                       </div>
                     </td>
                     <td>

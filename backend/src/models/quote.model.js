@@ -17,7 +17,17 @@ export const QuoteModel = {
         cu.name AS customer_name,
         cu.email AS customer_email,
         cu.phone AS customer_phone,
-        cu.address AS customer_address
+        cu.address AS customer_address,
+        
+        COALESCE(
+          (SELECT SUM(
+            ROUND(qi.line_total * (1 + COALESCE(t.rate, 0) / 100), 2)
+          )
+          FROM quote_items qi
+          LEFT JOIN products p ON p.id = qi.product_id
+          LEFT JOIN taxes t ON t.id = p.tax_id AND t.is_active = 1
+          WHERE qi.quote_id = q.id), 0
+        ) AS total_with_tax
       FROM quotes q
       LEFT JOIN customers cu ON cu.id = q.customer_id
       WHERE q.company_id = :companyId
@@ -34,6 +44,7 @@ export const QuoteModel = {
       currency: row.currency,
       validUntil: row.valid_until,
       createdAt: row.created_at,
+      totalWithTax: Number(row.total_with_tax) || 0,
       customer: row.customer_id
         ? {
             id: row.customer_id,

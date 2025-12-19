@@ -74,6 +74,7 @@ export default function QuotesPage() {
           <TableHeaderCell>Cliente</TableHeaderCell>
           <TableHeaderCell>Válido hasta</TableHeaderCell>
           <TableHeaderCell>Creado</TableHeaderCell>
+          <TableHeaderCell>Total</TableHeaderCell>
         </TableHeader>
         <TableBody>
           {filteredList.map((q) => (
@@ -92,11 +93,16 @@ export default function QuotesPage() {
               <TableCell>
                 {q.createdAt ? new Date(q.createdAt).toLocaleString() : "-"}
               </TableCell>
+              <TableCell>
+                {q.totalWithTax
+                  ? `${Number(q.totalWithTax).toFixed(2)} ${q.currency}`
+                  : "-"}
+              </TableCell>
             </TableRow>
           ))}
           {!filteredList.length && listStatus === "succeeded" && (
             <TableRow>
-              <TableCell colSpan={5}>No hay presupuestos aún.</TableCell>
+              <TableCell colSpan={6}>No hay presupuestos aún.</TableCell>
             </TableRow>
           )}
         </TableBody>

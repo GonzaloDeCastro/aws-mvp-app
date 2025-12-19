@@ -108,55 +108,61 @@ export default function QuoteDetailPage() {
 
   const exportPdf = async () => {
     const doc = new jsPDF();
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const margin = 10;
+    const contentWidth = pageWidth - margin * 2;
 
-    doc.setFontSize(16);
-    let currentY = 20;
+    doc.setFontSize(18);
+    doc.setFont(undefined, "bold");
+    let currentY = 15;
 
     if (quote.company.logo) {
       try {
-        const pageWidth = doc.internal.pageSize.getWidth();
-        const logoWidth = 40;
-        const margin = 14;
+        const logoWidth = 35;
         const logoX = pageWidth - margin - logoWidth;
 
         const imgData = await loadImageAsDataUrl(
           `data:image/png;base64,${quote.company.logo}`
         );
-        // height = 0 mantiene la relación de aspecto
-        doc.addImage(imgData, "PNG", logoX, 10, logoWidth, 0);
-        currentY = 30;
+        doc.addImage(imgData, "PNG", logoX, currentY, logoWidth, 0);
+        currentY = 25;
       } catch {
         // ignorar errores de logo
       }
     }
 
-    doc.text(`Presupuesto #${quote.quoteNumber}`, 14, currentY);
+    doc.text(`Presupuesto #${quote.quoteNumber}`, margin, currentY);
 
-    doc.setFontSize(11);
-    doc.text(`Estado: ${quote.status}`, 14, currentY + 8);
+    doc.setFontSize(10);
+    doc.setFont(undefined, "normal");
+    currentY += 7;
+    doc.text(`Estado: ${quote.status}`, margin, currentY);
     if (quote.validUntil) {
+      currentY += 6;
       doc.text(
         `Válido hasta: ${new Date(quote.validUntil).toLocaleDateString()}`,
-        14,
-        currentY + 14
+        margin,
+        currentY
       );
     }
 
-    let y = currentY + 24;
-    doc.setFontSize(12);
-    doc.text("Compañía", 14, y);
-    doc.text("Cliente", 110, y);
-    y += 6;
+    let y = currentY + 12;
+    doc.setFontSize(11);
+    doc.setFont(undefined, "bold");
+    doc.text("Compañía", margin, y);
+    doc.text("Cliente", margin + contentWidth / 2, y);
+    y += 7;
 
-    doc.setFontSize(10);
-    doc.text(quote.company.name || "", 14, y);
-    doc.text(quote.customer?.name || "", 110, y);
+    doc.setFontSize(9);
+    doc.setFont(undefined, "normal");
+    doc.text(quote.company.name || "-", margin, y);
+    doc.text(quote.customer?.name || "-", margin + contentWidth / 2, y);
     y += 5;
-    doc.text(quote.company.address || "", 14, y);
-    doc.text(quote.customer?.address || "", 110, y);
+    doc.text(quote.company.address || "-", margin, y);
+    doc.text(quote.customer?.address || "-", margin + contentWidth / 2, y);
     y += 5;
-    doc.text(quote.company.email || "", 14, y);
-    doc.text(quote.customer?.email || "", 110, y);
+    doc.text(quote.company.email || "-", margin, y);
+    doc.text(quote.customer?.email || "-", margin + contentWidth / 2, y);
 
     const itemRows = quote.items.map((i) => {
       const discountPct = i.discount_pct || 0;
@@ -164,17 +170,19 @@ export default function QuoteDetailPage() {
       const grossLineTotal = i.gross_line_total || i.line_total;
 
       return [
-        i.item_name || "",
+        (i.item_name || "").substring(0, 25), // Limitar longitud del nombre
         String(i.quantity || 0),
-        String(i.unit_price || 0),
+        Number(i.unit_price || 0).toFixed(2),
         discountPct > 0 ? `${discountPct}%` : "0%",
-        String(i.line_total || 0),
-        String(grossLineTotal),
+        Number(i.line_total || 0).toFixed(2),
+        taxRate > 0 ? `${taxRate}%` : "-",
+        Number(grossLineTotal).toFixed(2),
       ];
     });
 
     autoTable(doc, {
-      startY: y + 10,
+      startY: y + 8,
+      margin: { left: margin, right: margin },
       head: [
         [
           "Ítem",
@@ -182,29 +190,46 @@ export default function QuoteDetailPage() {
           "Precio unit.",
           "Desc. %",
           "Sub Total sin IVA",
+          "IVA",
           "Sub Total con IVA",
         ],
       ],
       body: itemRows,
-      styles: { fontSize: 9 },
-      headStyles: { fillColor: [40, 40, 60] },
-      columnStyles: {
-        0: { cellWidth: 60 },
-        1: { cellWidth: 20 },
-        2: { cellWidth: 30 },
-        3: { cellWidth: 25 },
-        4: { cellWidth: 35 },
-        5: { cellWidth: 35 },
+      styles: {
+        fontSize: 8,
+        cellPadding: 2,
+        overflow: "linebreak",
+        cellWidth: "wrap",
       },
+      headStyles: {
+        fillColor: [60, 60, 80],
+        textColor: [255, 255, 255],
+        fontStyle: "bold",
+        fontSize: 9,
+      },
+      alternateRowStyles: { fillColor: [245, 245, 245] },
+      columnStyles: {
+        0: { cellWidth: 45, halign: "left" },
+        1: { cellWidth: 16, halign: "center" },
+        2: { cellWidth: 22, halign: "right" },
+        3: { cellWidth: 18, halign: "center" },
+        4: { cellWidth: 28, halign: "right" },
+        5: { cellWidth: 18, halign: "center" },
+        6: { cellWidth: 28, halign: "right" },
+      },
+      theme: "striped",
     });
 
     const finalY = doc.lastAutoTable.finalY || y + 20;
-    let summaryY = finalY + 10;
+    let summaryY = finalY + 8;
 
-    doc.setFontSize(10);
+    const summaryX = pageWidth - margin;
+
+    doc.setFontSize(9);
+    doc.setFont(undefined, "normal");
     doc.text(
       `Total sin IVA: ${totals.totalSinIva.toFixed(2)} ${quote.currency}`,
-      120,
+      summaryX,
       summaryY,
       { align: "right" }
     );
@@ -213,18 +238,18 @@ export default function QuoteDetailPage() {
       summaryY += 6;
       doc.text(
         `IVA ${iva.rate}%: ${iva.amount.toFixed(2)} ${quote.currency}`,
-        120,
+        summaryX,
         summaryY,
         { align: "right" }
       );
     });
 
     summaryY += 8;
-    doc.setFontSize(12);
+    doc.setFontSize(11);
     doc.setFont(undefined, "bold");
     doc.text(
       `Total: ${totals.totalConIva.toFixed(2)} ${quote.currency}`,
-      120,
+      summaryX,
       summaryY,
       { align: "right" }
     );
@@ -287,6 +312,9 @@ export default function QuoteDetailPage() {
                   Sub Total sin IVA
                 </th>
                 <th className="text-left text-xs opacity-80 py-3 px-3 border-b border-white/8">
+                  IVA
+                </th>
+                <th className="text-left text-xs opacity-80 py-3 px-3 border-b border-white/8">
                   Sub Total con IVA
                 </th>
               </tr>
@@ -309,12 +337,10 @@ export default function QuoteDetailPage() {
                       {Number(i.line_total).toFixed(2)} {quote.currency}
                     </td>
                     <td className="px-3 py-2.5">
+                      {taxRate > 0 ? `${taxRate}%` : "-"}
+                    </td>
+                    <td className="px-3 py-2.5">
                       {Number(grossLineTotal).toFixed(2)} {quote.currency}
-                      {taxRate > 0 && (
-                        <span className="text-xs opacity-70 block">
-                          (IVA {taxRate}%)
-                        </span>
-                      )}
                     </td>
                   </tr>
                 );
