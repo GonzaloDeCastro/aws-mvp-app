@@ -112,7 +112,7 @@ export default function QuotesPage() {
                   </TableCell>
                   <TableCell>
                     {q.totalWithTax
-                      ? `${Number(q.totalWithTax).toFixed(2)} ${q.currency}`
+                      ? `${Number(q.totalWithTax).toFixed(2)} ARS`
                       : "-"}
                   </TableCell>
                   <TableCell onClick={(e) => e.stopPropagation()}>

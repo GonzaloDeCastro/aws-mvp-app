@@ -19,17 +19,10 @@ export const QuoteModel = {
         cu.phone AS customer_phone,
         cu.address AS customer_address,
         
-        COALESCE(
-          (SELECT SUM(
-            ROUND(qi.line_total * (1 + COALESCE(t.rate, 0) / 100), 2)
-          )
-          FROM quote_items qi
-          LEFT JOIN products p ON p.id = qi.product_id
-          LEFT JOIN taxes t ON t.id = p.tax_id AND t.is_active = 1
-          WHERE qi.quote_id = q.id), 0
-        ) AS total_with_tax
+        COALESCE(q.total_with_tax_ars, 0) AS total_with_tax
       FROM quotes q
       LEFT JOIN customers cu ON cu.id = q.customer_id
+      LEFT JOIN companies c ON c.id = q.company_id
       WHERE q.company_id = :companyId
       ORDER BY q.created_at DESC, q.id DESC
       `,
@@ -184,6 +177,13 @@ export const QuoteModel = {
     try {
       await conn.beginTransaction();
 
+      // 0) Obtener dollar_rate de la compañía para calcular el total fijo
+      const [companyRows] = await conn.execute(
+        `SELECT dollar_rate FROM companies WHERE id = ? LIMIT 1`,
+        [companyId]
+      );
+      const dollarRate = companyRows[0]?.dollar_rate || 1470;
+
       // 1) Insert header with a temporary quote_number
       const [qRes] = await conn.execute(
         `
@@ -217,7 +217,7 @@ export const QuoteModel = {
       const placeholders = productIds.map(() => "?").join(",");
       const [pRows] = await conn.execute(
         `
-        SELECT id, name, brand
+        SELECT id, name, brand, tax_id
         FROM products
         WHERE company_id = ? AND is_active = 1 AND id IN (${placeholders})
         `,
@@ -233,6 +233,7 @@ export const QuoteModel = {
       }
 
       // 4) Bulk insert quote_items (VALUES ?)
+      // Nota: line_total se guarda en la moneda original del item
       const values = items.map((it, idx) => {
         const pid = Number(it.productId);
         const p = productMap.get(pid);
@@ -240,6 +241,7 @@ export const QuoteModel = {
         const qty = Number(it.quantity);
         const unitPrice = Number(it.unitPrice);
         const discountPct = Number(it.discountPct ?? 0);
+        const itemCurrency = it.currency ?? currency ?? "ARS";
 
         if (!Number.isFinite(qty) || qty <= 0)
           throw new HttpError(400, "quantity must be > 0");
@@ -259,7 +261,7 @@ export const QuoteModel = {
           p.brand ?? null,
           qty,
           unitPrice,
-          it.currency ?? currency ?? "ARS",
+          itemCurrency,
           discountPct,
           lineTotal,
           Number(it.sortOrder ?? idx + 1),
@@ -273,6 +275,35 @@ export const QuoteModel = {
         VALUES ?
         `,
         [values]
+      );
+
+      // 5) Calcular total_with_tax_ars usando los items insertados, convirtiendo USD a ARS
+      const [totalRows] = await conn.execute(
+        `
+        SELECT COALESCE(
+          SUM(
+            ROUND(
+              CASE
+                WHEN qi.currency = 'USD' THEN qi.line_total * :dollarRate
+                ELSE qi.line_total
+              END * (1 + COALESCE(t.rate, 0) / 100), 2
+            )
+          ), 0
+        ) AS total_with_tax_ars
+        FROM quote_items qi
+        LEFT JOIN products p ON p.id = qi.product_id
+        LEFT JOIN taxes t ON t.id = p.tax_id AND t.is_active = 1
+        WHERE qi.quote_id = :quoteId
+        `,
+        { quoteId, dollarRate }
+      );
+
+      const totalWithTaxArs = Number(totalRows[0]?.total_with_tax_ars || 0);
+
+      // 6) Actualizar el quote con el total calculado
+      await conn.execute(
+        `UPDATE quotes SET total_with_tax_ars = ? WHERE id = ? AND company_id = ?`,
+        [totalWithTaxArs, quoteId, companyId]
       );
 
       await conn.commit();
