@@ -1,8 +1,16 @@
 import { useEffect, useMemo, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { createCustomer, fetchCustomers } from "../redux/customersSlice";
+import {
+  createCustomer,
+  fetchCustomers,
+  deleteCustomer,
+} from "../redux/customersSlice";
 import Modal from "../components/ui/Modal";
-import { PrimaryButton, SecondaryButton } from "../components/ui/Button";
+import {
+  PrimaryButton,
+  SecondaryButton,
+  DangerButton,
+} from "../components/ui/Button";
 import Input from "../components/ui/Input";
 import Label from "../components/ui/Label";
 import Toolbar, {
@@ -19,6 +27,7 @@ import Table, {
 import SearchInput from "../components/ui/SearchInput";
 import { InfoAlert, ErrorAlert } from "../components/ui/Alert";
 import Pagination from "../components/ui/Pagination";
+import ConfirmModal from "../components/ui/ConfirmModal";
 
 function NewCustomerModal({ open, onClose, onSubmit, loading }) {
   const initialForm = {
@@ -89,6 +98,11 @@ export default function CustomersPage() {
 
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
+  const [deleteModal, setDeleteModal] = useState({
+    open: false,
+    customerId: null,
+    customerName: "",
+  });
 
   useEffect(() => {
     dispatch(fetchCustomers());
@@ -119,6 +133,13 @@ export default function CustomersPage() {
     dispatch(fetchCustomers());
   };
 
+  const handleDelete = async () => {
+    if (deleteModal.customerId) {
+      await dispatch(deleteCustomer(deleteModal.customerId)).unwrap();
+      setDeleteModal({ open: false, customerId: null, customerName: "" });
+    }
+  };
+
   return (
     <div className="grid gap-3">
       <Toolbar>
@@ -147,6 +168,7 @@ export default function CustomersPage() {
               <TableHeaderCell>Teléfono</TableHeaderCell>
               <TableHeaderCell>CUIT/CUIL</TableHeaderCell>
               <TableHeaderCell>Dirección</TableHeaderCell>
+              <TableHeaderCell>Acciones</TableHeaderCell>
             </TableHeader>
             <TableBody>
               {paginatedRows.map((c) => (
@@ -156,11 +178,25 @@ export default function CustomersPage() {
                   <TableCell>{c.phone || "-"}</TableCell>
                   <TableCell>{c.tax_id || "-"}</TableCell>
                   <TableCell>{c.address || "-"}</TableCell>
+                  <TableCell>
+                    <DangerButton
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setDeleteModal({
+                          open: true,
+                          customerId: c.id,
+                          customerName: c.name,
+                        });
+                      }}
+                    >
+                      Eliminar
+                    </DangerButton>
+                  </TableCell>
                 </TableRow>
               ))}
               {!rows.length && status === "succeeded" && (
                 <TableRow>
-                  <TableCell colSpan={5}>Todavía no hay clientes.</TableCell>
+                  <TableCell colSpan={6}>Todavía no hay clientes.</TableCell>
                 </TableRow>
               )}
             </TableBody>
@@ -175,6 +211,19 @@ export default function CustomersPage() {
         onClose={() => setOpen(false)}
         onSubmit={onCreate}
         loading={createStatus === "loading"}
+      />
+
+      <ConfirmModal
+        open={deleteModal.open}
+        onClose={() =>
+          setDeleteModal({ open: false, customerId: null, customerName: "" })
+        }
+        onConfirm={handleDelete}
+        title="Eliminar cliente"
+        message={`¿Estás seguro de que deseas eliminar el cliente "${deleteModal.customerName}"? Esta acción no se puede deshacer.`}
+        confirmText="Eliminar"
+        cancelText="Cancelar"
+        confirmVariant="danger"
       />
     </div>
   );

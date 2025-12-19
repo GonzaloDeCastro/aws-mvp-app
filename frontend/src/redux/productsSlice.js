@@ -1,5 +1,5 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
-import { apiGet, apiPost, apiPut } from "../api";
+import { apiGet, apiPost, apiPut, apiDelete } from "../api";
 
 export const fetchProducts = createAsyncThunk(
   "products/fetchProducts",
@@ -51,6 +51,14 @@ export const updateProduct = createAsyncThunk(
   async ({ id, ...payload }) => {
     const json = await apiPut(`/products/${id}`, payload);
     return json.data;
+  }
+);
+
+export const deleteProduct = createAsyncThunk(
+  "products/deleteProduct",
+  async (id) => {
+    await apiDelete(`/products/${id}`);
+    return id;
   }
 );
 
@@ -135,6 +143,9 @@ const productsSlice = createSlice({
       .addCase(updateProduct.rejected, (state, action) => {
         state.updateStatus = "failed";
         state.updateError = action.error?.message || "Failed to update product";
+      })
+      .addCase(deleteProduct.fulfilled, (state, action) => {
+        state.items = state.items.filter((p) => p.id !== action.payload);
       });
   },
 });

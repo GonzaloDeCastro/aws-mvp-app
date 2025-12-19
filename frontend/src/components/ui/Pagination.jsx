@@ -3,7 +3,7 @@ import Select from "./Select";
 
 export default function Pagination({
   data,
-  itemsPerPageOptions = [8, 10, 15, 25, 50],
+  itemsPerPageOptions = [6, 10, 15, 25, 50],
   children,
 }) {
   const [currentPage, setCurrentPage] = useState(1);

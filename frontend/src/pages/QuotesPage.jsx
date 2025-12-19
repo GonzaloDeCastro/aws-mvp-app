@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
-import { fetchQuotes } from "../redux/quotesSlice";
-import { PrimaryButton } from "../components/ui/Button";
+import { fetchQuotes, deleteQuote } from "../redux/quotesSlice";
+import { PrimaryButton, DangerButton } from "../components/ui/Button";
 import Toolbar, {
   ToolbarTitle,
   ToolbarActions,
@@ -17,6 +17,7 @@ import Table, {
 import SearchInput from "../components/ui/SearchInput";
 import { InfoAlert, ErrorAlert } from "../components/ui/Alert";
 import Pagination from "../components/ui/Pagination";
+import ConfirmModal from "../components/ui/ConfirmModal";
 
 export default function QuotesPage() {
   const dispatch = useDispatch();
@@ -25,6 +26,11 @@ export default function QuotesPage() {
   const { list, listStatus, listError } = useSelector((s) => s.quotes);
 
   const [search, setSearch] = useState("");
+  const [deleteModal, setDeleteModal] = useState({
+    open: false,
+    quoteId: null,
+    quoteNumber: "",
+  });
 
   useEffect(() => {
     if (listStatus === "idle") {
@@ -46,6 +52,13 @@ export default function QuotesPage() {
       );
     });
   }, [list, search]);
+
+  const handleDelete = async () => {
+    if (deleteModal.quoteId) {
+      await dispatch(deleteQuote(deleteModal.quoteId)).unwrap();
+      setDeleteModal({ open: false, quoteId: null, quoteNumber: "" });
+    }
+  };
 
   return (
     <div className="grid gap-3">
@@ -78,6 +91,7 @@ export default function QuotesPage() {
               <TableHeaderCell>Válido hasta</TableHeaderCell>
               <TableHeaderCell>Creado</TableHeaderCell>
               <TableHeaderCell>Total</TableHeaderCell>
+              <TableHeaderCell>Acciones</TableHeaderCell>
             </TableHeader>
             <TableBody>
               {paginatedList.map((q) => (
@@ -101,17 +115,44 @@ export default function QuotesPage() {
                       ? `${Number(q.totalWithTax).toFixed(2)} ${q.currency}`
                       : "-"}
                   </TableCell>
+                  <TableCell onClick={(e) => e.stopPropagation()}>
+                    <DangerButton
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setDeleteModal({
+                          open: true,
+                          quoteId: q.id,
+                          quoteNumber: q.quoteNumber,
+                        });
+                      }}
+                    >
+                      Eliminar
+                    </DangerButton>
+                  </TableCell>
                 </TableRow>
               ))}
               {!filteredList.length && listStatus === "succeeded" && (
                 <TableRow>
-                  <TableCell colSpan={6}>No hay presupuestos aún.</TableCell>
+                  <TableCell colSpan={7}>No hay presupuestos aún.</TableCell>
                 </TableRow>
               )}
             </TableBody>
           </Table>
         )}
       </Pagination>
+
+      <ConfirmModal
+        open={deleteModal.open}
+        onClose={() =>
+          setDeleteModal({ open: false, quoteId: null, quoteNumber: "" })
+        }
+        onConfirm={handleDelete}
+        title="Eliminar presupuesto"
+        message={`¿Estás seguro de que deseas eliminar el presupuesto #${deleteModal.quoteNumber}? Esta acción no se puede deshacer.`}
+        confirmText="Eliminar"
+        cancelText="Cancelar"
+        confirmVariant="danger"
+      />
     </div>
   );
 }

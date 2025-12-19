@@ -74,4 +74,21 @@ export const QuoteController = {
       next(e);
     }
   },
+
+  async remove(req, res, next) {
+    try {
+      const companyId = Number(req.user?.companyId);
+      if (!companyId) throw new HttpError(401, "Unauthorized");
+
+      const quoteId = Number(req.params.id);
+      if (!quoteId) throw new HttpError(400, "Invalid quote id");
+
+      const affected = await QuoteModel.remove({ companyId, quoteId });
+      if (!affected) throw new HttpError(404, "Quote not found");
+
+      res.json({ ok: true });
+    } catch (e) {
+      next(e);
+    }
+  },
 };

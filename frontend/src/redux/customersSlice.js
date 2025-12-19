@@ -1,5 +1,5 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
-import { apiGet, apiPost } from "../api";
+import { apiGet, apiPost, apiDelete } from "../api";
 
 export const fetchCustomers = createAsyncThunk(
   "customers/fetchCustomers",
@@ -14,6 +14,14 @@ export const createCustomer = createAsyncThunk(
   async (payload) => {
     const json = await apiPost("/customers", payload);
     return json.data; // { id }
+  }
+);
+
+export const deleteCustomer = createAsyncThunk(
+  "customers/deleteCustomer",
+  async (id) => {
+    await apiDelete(`/customers/${id}`);
+    return id;
   }
 );
 
@@ -55,6 +63,9 @@ const customersSlice = createSlice({
         state.createStatus = "failed";
         state.createError =
           action.error?.message || "Failed to create customer";
+      })
+      .addCase(deleteCustomer.fulfilled, (state, action) => {
+        state.items = state.items.filter((c) => c.id !== action.payload);
       });
   },
 });

@@ -25,9 +25,9 @@ export default function QuoteCreatePage() {
   const productsStatus = useSelector((s) => s.products.status);
 
   const [customerId, setCustomerId] = useState("");
-  const [currency, setCurrency] = useState("ARS");
   const [validUntil, setValidUntil] = useState("");
   const [notes, setNotes] = useState("");
+  const [dollarRate, setDollarRate] = useState(1470);
 
   const [items, setItems] = useState([
     {
@@ -59,8 +59,10 @@ export default function QuoteCreatePage() {
     if (p) {
       patch.unitPrice = p.price;
       patch.taxRate = p.tax_rate || null;
+      patch.itemCurrency = p.currency; // Guardar la moneda del producto
     } else {
       patch.taxRate = null;
+      patch.itemCurrency = "ARS"; // Usar ARS por defecto
     }
     updateItem(index, patch);
   };
@@ -74,6 +76,7 @@ export default function QuoteCreatePage() {
         unitPrice: "",
         discountPct: 0,
         taxRate: null,
+        itemCurrency: "ARS",
       },
     ]);
   };
@@ -95,10 +98,16 @@ export default function QuoteCreatePage() {
         it.taxRate !== null && it.taxRate !== undefined
           ? Number(it.taxRate)
           : 0;
+      const itemCurrency = it.itemCurrency || "ARS";
 
       const gross = quantity * unitPrice;
       const discount = gross * (discountPct / 100);
-      const lineTotal = Number((gross - discount).toFixed(2));
+      let lineTotal = Number((gross - discount).toFixed(2));
+
+      // Convertir a ARS si el item está en USD
+      if (itemCurrency === "USD") {
+        lineTotal = Number((lineTotal * dollarRate).toFixed(2));
+      }
 
       totalSinIva += lineTotal;
 
@@ -129,7 +138,7 @@ export default function QuoteCreatePage() {
       ivaTotals,
       totalConIva,
     };
-  }, [items]);
+  }, [items, dollarRate]);
 
   const onCreate = async () => {
     const preparedItems = items
@@ -137,7 +146,7 @@ export default function QuoteCreatePage() {
         productId: it.productId ? Number(it.productId) : null,
         quantity: Number(it.quantity) || 0,
         unitPrice: Number(it.unitPrice) || 0,
-        currency,
+        currency: it.itemCurrency || "ARS",
         discountPct: Number(it.discountPct) || 0,
         sortOrder: idx + 1,
       }))
@@ -151,7 +160,7 @@ export default function QuoteCreatePage() {
     const data = await dispatch(
       createQuote({
         customerId: customerId ? Number(customerId) : null,
-        currency,
+        currency: "ARS", // Siempre ARS ya que convertimos todo
         validUntil: validUntil || null,
         notes: notes || null,
         items: preparedItems,
@@ -189,16 +198,6 @@ export default function QuoteCreatePage() {
                 {c.name}
               </option>
             ))}
-          </Select>
-
-          <Label>Moneda</Label>
-          <Select
-            value={currency}
-            onChange={(e) => setCurrency(e.target.value)}
-          >
-            <option value="ARS">ARS</option>
-            <option value="USD">USD</option>
-            <option value="EUR">EUR</option>
           </Select>
 
           <Label>Válido hasta</Label>
@@ -354,7 +353,7 @@ export default function QuoteCreatePage() {
                     </td>
                     <td>
                       <div className="px-3 py-2.5 text-sm">
-                        {lineTotal.toFixed(2)} {currency}
+                        {lineTotal.toFixed(2)} {it.itemCurrency || "ARS"}
                       </div>
                     </td>
                     <td>
@@ -364,7 +363,7 @@ export default function QuoteCreatePage() {
                     </td>
                     <td>
                       <div className="px-3 py-2.5 text-sm">
-                        {grossLineTotal.toFixed(2)} {currency}
+                        {grossLineTotal.toFixed(2)} {it.itemCurrency || "ARS"}
                       </div>
                     </td>
                     <td>
@@ -384,12 +383,25 @@ export default function QuoteCreatePage() {
 
           {/* Resumen de totales */}
           <div className="mt-4 pt-4 border-t border-white/12">
-            <div className="flex justify-end">
+            <div className="flex justify-between items-end">
+              <div className="text-sm">
+                <Label className="text-xs opacity-80 mb-1">
+                  Dolar Referencia:
+                </Label>
+                <Input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={dollarRate}
+                  onChange={(e) => setDollarRate(Number(e.target.value) || 0)}
+                  className="w-24 text-sm"
+                />
+              </div>
               <div className="w-full max-w-md space-y-2">
                 <div className="flex justify-between text-sm">
                   <span className="opacity-80">Total sin IVA:</span>
                   <span className="font-medium">
-                    {totals.totalSinIva.toFixed(2)} {currency}
+                    {totals.totalSinIva.toFixed(2)} ARS
                   </span>
                 </div>
 
@@ -397,16 +409,14 @@ export default function QuoteCreatePage() {
                   <div key={iva.rate} className="flex justify-between text-sm">
                     <span className="opacity-80">IVA {iva.rate}%:</span>
                     <span className="font-medium">
-                      {iva.amount.toFixed(2)} {currency}
+                      {iva.amount.toFixed(2)} ARS
                     </span>
                   </div>
                 ))}
 
                 <div className="flex justify-between text-base font-semibold pt-2 border-t border-white/12">
                   <span>Total:</span>
-                  <span>
-                    {totals.totalConIva.toFixed(2)} {currency}
-                  </span>
+                  <span>{totals.totalConIva.toFixed(2)} ARS</span>
                 </div>
               </div>
             </div>

@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchQuoteById } from "../redux/quotesSlice";
 import { useParams } from "react-router-dom";
@@ -6,6 +6,8 @@ import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import Card from "../components/ui/Card";
 import { SecondaryButton } from "../components/ui/Button";
+import Input from "../components/ui/Input";
+import Label from "../components/ui/Label";
 import Table, {
   TableHeader,
   TableHeaderCell,
@@ -28,6 +30,8 @@ export default function QuoteDetailPage() {
   }, [dispatch, quoteId, status]);
 
   // Calcular totales (debe estar antes de los early returns para cumplir con las reglas de hooks)
+  const [dollarRate, setDollarRate] = useState(1470);
+
   const totals = useMemo(() => {
     if (!quote || !quote.items) {
       return {
@@ -41,18 +45,23 @@ export default function QuoteDetailPage() {
     const ivaGroups = {};
 
     quote.items.forEach((i) => {
-      const lineTotal = Number(i.line_total) || 0;
+      let lineTotal = Number(i.line_total) || 0;
+      const itemCurrency = i.currency || quote.currency;
       const taxRate =
         i.tax_rate !== null && i.tax_rate !== undefined
           ? Number(i.tax_rate)
           : 0;
 
+      // Convertir a ARS si el item está en USD
+      if (itemCurrency === "USD") {
+        lineTotal = Number((lineTotal * dollarRate).toFixed(2));
+      }
+
       totalSinIva += lineTotal;
 
       if (taxRate > 0) {
-        const taxAmount =
-          Number(i.tax_amount) ||
-          Number((lineTotal * (taxRate / 100)).toFixed(2));
+        // Calcular tax_amount basado en el lineTotal ya convertido
+        const taxAmount = Number((lineTotal * (taxRate / 100)).toFixed(2));
         if (!ivaGroups[taxRate]) {
           ivaGroups[taxRate] = 0;
         }
@@ -78,7 +87,7 @@ export default function QuoteDetailPage() {
       ivaTotals,
       totalConIva,
     };
-  }, [quote]);
+  }, [quote, dollarRate]);
 
   if (status === "loading")
     return <div className="text-[#e8eefc]">Cargando presupuesto…</div>;
@@ -317,11 +326,19 @@ export default function QuoteDetailPage() {
     let summaryY = finalY + 10;
 
     const summaryX = pageWidth - margin;
+    const DOLLAR_RATE = 1470;
 
+    // Dolar Referencia (izquierda)
     doc.setFontSize(9);
     doc.setFont(undefined, "normal");
+    doc.text("Dolar Referencia:", margin, summaryY);
+    doc.setFont(undefined, "bold");
+    doc.text(`${DOLLAR_RATE} USD`, 0 + 40, summaryY);
+
+    // Total sin IVA (derecha)
+    doc.setFont(undefined, "normal");
     doc.text(
-      `Total sin IVA: ${totals.totalSinIva.toFixed(2)} ${quote.currency}`,
+      `Total sin IVA: ${totals.totalSinIva.toFixed(2)} ARS`,
       summaryX,
       summaryY,
       { align: "right" }
@@ -335,7 +352,7 @@ export default function QuoteDetailPage() {
 
     totals.ivaTotals.forEach((iva) => {
       doc.text(
-        `IVA ${iva.rate}%: ${iva.amount.toFixed(2)} ${quote.currency}`,
+        `IVA ${iva.rate}%: ${iva.amount.toFixed(2)} ARS`,
         summaryX,
         summaryY,
         { align: "right" }
@@ -352,7 +369,7 @@ export default function QuoteDetailPage() {
     doc.setFontSize(11);
     doc.setFont(undefined, "bold");
     doc.text(
-      `Total: ${totals.totalConIva.toFixed(2)} ${quote.currency}`,
+      `Total: ${totals.totalConIva.toFixed(2)} ARS`,
       summaryX,
       summaryY,
       { align: "right" }
@@ -478,12 +495,18 @@ export default function QuoteDetailPage() {
 
           {/* Resumen de totales */}
           <div className="mt-4 pt-4 border-t border-white/12">
-            <div className="flex justify-end">
+            <div className="flex justify-between items-end">
+              <div className="text-sm">
+                <Label className="text-xs opacity-80 mb-1">
+                  Dolar Referencia:
+                </Label>
+                <span className="font-medium">{dollarRate} USD</span>
+              </div>
               <div className="w-full max-w-md space-y-2">
                 <div className="flex justify-between text-sm">
                   <span className="opacity-80">Total sin IVA:</span>
                   <span className="font-medium">
-                    {totals.totalSinIva.toFixed(2)} {quote.currency}
+                    {totals.totalSinIva.toFixed(2)} ARS
                   </span>
                 </div>
 
@@ -491,16 +514,14 @@ export default function QuoteDetailPage() {
                   <div key={iva.rate} className="flex justify-between text-sm">
                     <span className="opacity-80">IVA {iva.rate}%:</span>
                     <span className="font-medium">
-                      {iva.amount.toFixed(2)} {quote.currency}
+                      {iva.amount.toFixed(2)} ARS
                     </span>
                   </div>
                 ))}
 
                 <div className="flex justify-between text-base font-semibold pt-2 border-t border-white/12">
                   <span>Total:</span>
-                  <span>
-                    {totals.totalConIva.toFixed(2)} {quote.currency}
-                  </span>
+                  <span>{totals.totalConIva.toFixed(2)} ARS</span>
                 </div>
               </div>
             </div>

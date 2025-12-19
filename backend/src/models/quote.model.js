@@ -284,4 +284,30 @@ export const QuoteModel = {
       conn.release();
     }
   },
+
+  async remove({ companyId, quoteId }) {
+    const connection = await pool.getConnection();
+    try {
+      await connection.beginTransaction();
+
+      // Eliminar items primero (por foreign key)
+      await connection.execute(`DELETE FROM quote_items WHERE quote_id = ?`, [
+        quoteId,
+      ]);
+
+      // Eliminar el quote
+      const [result] = await connection.execute(
+        `DELETE FROM quotes WHERE company_id = ? AND id = ?`,
+        [companyId, quoteId]
+      );
+
+      await connection.commit();
+      return result.affectedRows;
+    } catch (error) {
+      await connection.rollback();
+      throw error;
+    } finally {
+      connection.release();
+    }
+  },
 };

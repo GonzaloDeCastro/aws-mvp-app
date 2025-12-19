@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
-import { fetchProducts } from "../redux/productsSlice";
-import { PrimaryButton } from "../components/ui/Button";
+import { fetchProducts, deleteProduct } from "../redux/productsSlice";
+import { PrimaryButton, DangerButton } from "../components/ui/Button";
 import Toolbar, {
   ToolbarTitle,
   ToolbarActions,
@@ -17,6 +17,7 @@ import Table, {
 import SearchInput from "../components/ui/SearchInput";
 import { InfoAlert, ErrorAlert } from "../components/ui/Alert";
 import Pagination from "../components/ui/Pagination";
+import ConfirmModal from "../components/ui/ConfirmModal";
 
 export default function ProductsPage() {
   const dispatch = useDispatch();
@@ -24,6 +25,11 @@ export default function ProductsPage() {
   const { items, status, error } = useSelector((s) => s.products);
 
   const [search, setSearch] = useState("");
+  const [deleteModal, setDeleteModal] = useState({
+    open: false,
+    productId: null,
+    productName: "",
+  });
 
   useEffect(() => {
     dispatch(fetchProducts());
@@ -43,6 +49,13 @@ export default function ProductsPage() {
       );
     });
   }, [items, search]);
+
+  const handleDelete = async () => {
+    if (deleteModal.productId) {
+      await dispatch(deleteProduct(deleteModal.productId)).unwrap();
+      setDeleteModal({ open: false, productId: null, productName: "" });
+    }
+  };
 
   return (
     <div className="grid gap-3">
@@ -74,6 +87,7 @@ export default function ProductsPage() {
               <TableHeaderCell>Precio</TableHeaderCell>
               <TableHeaderCell>Moneda</TableHeaderCell>
               <TableHeaderCell>IVA</TableHeaderCell>
+              <TableHeaderCell>Acciones</TableHeaderCell>
             </TableHeader>
             <TableBody>
               {paginatedItems.map((p) => (
@@ -89,17 +103,44 @@ export default function ProductsPage() {
                       ? `${p.tax_rate}%`
                       : "-"}
                   </TableCell>
+                  <TableCell>
+                    <DangerButton
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setDeleteModal({
+                          open: true,
+                          productId: p.id,
+                          productName: p.name,
+                        });
+                      }}
+                    >
+                      Eliminar
+                    </DangerButton>
+                  </TableCell>
                 </TableRow>
               ))}
               {!filteredItems.length && status === "succeeded" && (
                 <TableRow>
-                  <TableCell colSpan={7}>No hay productos aún.</TableCell>
+                  <TableCell colSpan={8}>No hay productos aún.</TableCell>
                 </TableRow>
               )}
             </TableBody>
           </Table>
         )}
       </Pagination>
+
+      <ConfirmModal
+        open={deleteModal.open}
+        onClose={() =>
+          setDeleteModal({ open: false, productId: null, productName: "" })
+        }
+        onConfirm={handleDelete}
+        title="Eliminar producto"
+        message={`¿Estás seguro de que deseas eliminar el producto "${deleteModal.productName}"? Esta acción no se puede deshacer.`}
+        confirmText="Eliminar"
+        cancelText="Cancelar"
+        confirmVariant="danger"
+      />
     </div>
   );
 }
