@@ -30,7 +30,8 @@ export default function QuoteDetailPage() {
   }, [dispatch, quoteId, status]);
 
   // Calcular totales (debe estar antes de los early returns para cumplir con las reglas de hooks)
-  const dollarRate = 1470; // TODO: Obtener desde Redux cuando se implemente
+  // Usar el dólar guardado al crear el presupuesto, o fallback a 1470
+  const dollarRate = quote?.dollarRateUsed || 1470;
 
   const totals = useMemo(() => {
     if (!quote || !quote.items) {
@@ -350,7 +351,8 @@ export default function QuoteDetailPage() {
     let summaryY = finalY + 10;
 
     const summaryX = pageWidth - margin;
-    const DOLLAR_RATE = 1470;
+    // Usar el dólar guardado al crear el presupuesto
+    const DOLLAR_RATE = quote?.dollarRateUsed || 1470;
 
     // Dolar Referencia (izquierda)
     doc.setFontSize(9);
