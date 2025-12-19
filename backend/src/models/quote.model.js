@@ -1,4 +1,5 @@
 import { pool } from "../config/db.js";
+import { HttpError } from "../utils/httpError.js";
 
 export const QuoteModel = {
   async listByCompany(companyId) {
@@ -63,6 +64,7 @@ export const QuoteModel = {
         q.notes,
         q.valid_until,
         q.created_at,
+        q.dollar_rate_used,
 
         c.id AS company_id,
         c.name AS company_name,
@@ -128,6 +130,9 @@ export const QuoteModel = {
       notes: header.notes,
       validUntil: header.valid_until,
       createdAt: header.created_at,
+      dollarRateUsed: header.dollar_rate_used
+        ? Number(header.dollar_rate_used)
+        : null,
 
       company: {
         id: header.company_id,
@@ -300,7 +305,175 @@ export const QuoteModel = {
 
       const totalWithTaxArs = Number(totalRows[0]?.total_with_tax_ars || 0);
 
-      // 6) Actualizar el quote con el total calculado
+      // 6) Actualizar el quote con el total calculado y el dólar usado
+      await conn.execute(
+        `UPDATE quotes SET total_with_tax_ars = ?, dollar_rate_used = ? WHERE id = ? AND company_id = ?`,
+        [totalWithTaxArs, dollarRate, quoteId, companyId]
+      );
+
+      await conn.commit();
+      return quoteId;
+    } catch (e) {
+      await conn.rollback();
+      throw e;
+    } finally {
+      conn.release();
+    }
+  },
+
+  async updateWithItems({
+    companyId,
+    quoteId,
+    customerId,
+    currency,
+    validUntil,
+    items,
+  }) {
+    if (!Array.isArray(items) || items.length === 0) {
+      throw new HttpError(
+        400,
+        "items is required and must be a non-empty array"
+      );
+    }
+
+    const conn = await pool.getConnection();
+
+    try {
+      await conn.beginTransaction();
+
+      // 0) Verificar que el quote existe y obtener el dollar_rate_used
+      const [quoteRows] = await conn.execute(
+        `SELECT id, dollar_rate_used FROM quotes WHERE id = ? AND company_id = ? LIMIT 1`,
+        [quoteId, companyId]
+      );
+      if (quoteRows.length === 0) {
+        throw new HttpError(404, "Quote not found");
+      }
+
+      // 1) Usar el dollar_rate_used guardado (no cambiar el dólar de referencia)
+      // Si no existe (presupuestos antiguos), obtener el actual pero no guardarlo
+      let dollarRate = quoteRows[0]?.dollar_rate_used;
+      if (!dollarRate) {
+        // Para presupuestos antiguos sin dollar_rate_used, usar el actual
+        const [companyRows] = await conn.execute(
+          `SELECT dollar_rate FROM companies WHERE id = ? LIMIT 1`,
+          [companyId]
+        );
+        dollarRate = companyRows[0]?.dollar_rate || 1470;
+      }
+
+      // 2) Actualizar header del quote
+      await conn.execute(
+        `
+        UPDATE quotes
+        SET customer_id = ?, currency = ?, valid_until = ?
+        WHERE id = ? AND company_id = ?
+        `,
+        [
+          customerId ?? null,
+          currency ?? "ARS",
+          validUntil ?? null,
+          quoteId,
+          companyId,
+        ]
+      );
+
+      // 3) Eliminar items existentes
+      await conn.execute(`DELETE FROM quote_items WHERE quote_id = ?`, [
+        quoteId,
+      ]);
+
+      // 4) Fetch products snapshot
+      const productIds = [...new Set(items.map((it) => Number(it.productId)))];
+      if (productIds.some((id) => !id))
+        throw new HttpError(400, "Invalid productId in items");
+
+      const placeholders = productIds.map(() => "?").join(",");
+      const [pRows] = await conn.execute(
+        `
+        SELECT id, name, brand, tax_id
+        FROM products
+        WHERE company_id = ? AND is_active = 1 AND id IN (${placeholders})
+        `,
+        [companyId, ...productIds]
+      );
+
+      const productMap = new Map(pRows.map((p) => [p.id, p]));
+      for (const it of items) {
+        const pid = Number(it.productId);
+        if (!productMap.has(pid)) {
+          throw new HttpError(400, `Invalid productId: ${it.productId}`);
+        }
+      }
+
+      // 5) Bulk insert nuevos quote_items
+      const values = items.map((it, idx) => {
+        const pid = Number(it.productId);
+        const p = productMap.get(pid);
+
+        const qty = Number(it.quantity);
+        const unitPrice = Number(it.unitPrice);
+        const discountPct = Number(it.discountPct ?? 0);
+        const itemCurrency = it.currency ?? currency ?? "ARS";
+
+        if (!Number.isFinite(qty) || qty <= 0)
+          throw new HttpError(400, "quantity must be > 0");
+        if (!Number.isFinite(unitPrice) || unitPrice < 0)
+          throw new HttpError(400, "unitPrice must be >= 0");
+        if (!Number.isFinite(discountPct) || discountPct < 0)
+          throw new HttpError(400, "discountPct must be >= 0");
+
+        const gross = qty * unitPrice;
+        const disc = gross * (discountPct / 100);
+        const lineTotal = Number((gross - disc).toFixed(2));
+
+        return [
+          quoteId,
+          pid,
+          p.name,
+          p.brand ?? null,
+          qty,
+          unitPrice,
+          itemCurrency,
+          discountPct,
+          lineTotal,
+          Number(it.sortOrder ?? idx + 1),
+        ];
+      });
+
+      await conn.query(
+        `
+        INSERT INTO quote_items
+          (quote_id, product_id, item_name, brand, quantity, unit_price, currency, discount_pct, line_total, sort_order)
+        VALUES ?
+        `,
+        [values]
+      );
+
+      // 6) Calcular total_with_tax_ars usando los items insertados, convirtiendo USD a ARS
+      const [totalRows] = await conn.execute(
+        `
+        SELECT COALESCE(
+          SUM(
+            ROUND(
+              CASE
+                WHEN qi.currency = 'USD' THEN qi.line_total * :dollarRate
+                ELSE qi.line_total
+              END * (1 + COALESCE(t.rate, 0) / 100), 2
+            )
+          ), 0
+        ) AS total_with_tax_ars
+        FROM quote_items qi
+        LEFT JOIN products p ON p.id = qi.product_id
+        LEFT JOIN taxes t ON t.id = p.tax_id AND t.is_active = 1
+        WHERE qi.quote_id = :quoteId
+        `,
+        { quoteId, dollarRate }
+      );
+
+      const totalWithTaxArs = Number(totalRows[0]?.total_with_tax_ars || 0);
+
+      // 7) Actualizar el quote con el total calculado
       await conn.execute(
         `UPDATE quotes SET total_with_tax_ars = ? WHERE id = ? AND company_id = ?`,
         [totalWithTaxArs, quoteId, companyId]

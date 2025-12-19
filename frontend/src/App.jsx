@@ -12,7 +12,9 @@ import QuoteDetailPage from "./pages/QuoteDetailPage";
 import NotFoundPage from "./pages/NotFoundPage";
 import CustomersPage from "./pages/CustomersPage";
 import CustomerCreatePage from "./pages/CustomerCreatePage";
+import CustomerEditPage from "./pages/CustomerEditPage";
 import QuoteCreatePage from "./pages/QuoteCreatePage";
+import QuoteEditPage from "./pages/QuoteEditPage";
 import CompanyPage from "./pages/CompanyPage";
 
 export default function App() {
@@ -29,9 +31,11 @@ export default function App() {
           <Route path="products/:id/edit" element={<ProductEditPage />} />
           <Route path="quotes" element={<QuotesPage />} />
           <Route path="quotes/:id" element={<QuoteDetailPage />} />
+          <Route path="quotes/:id/edit" element={<QuoteEditPage />} />
           <Route path="quotes/new" element={<QuoteCreatePage />} />
           <Route path="customers" element={<CustomersPage />} />
           <Route path="customers/new" element={<CustomerCreatePage />} />
+          <Route path="customers/:id/edit" element={<CustomerEditPage />} />
           <Route path="company" element={<CompanyPage />} />
         </Route>
       </Route>

@@ -1,5 +1,5 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
-import { apiGet, apiPost, apiDelete } from "../api";
+import { apiGet, apiPost, apiPut, apiDelete } from "../api";
 
 /**
  * Fetches a list of quotes for the current company.
@@ -26,6 +26,14 @@ export const createQuote = createAsyncThunk(
   async (payload) => {
     const json = await apiPost("/quotes", payload);
     return json.data; // { id }
+  }
+);
+
+export const updateQuote = createAsyncThunk(
+  "quotes/updateQuote",
+  async ({ quoteId, ...payload }) => {
+    await apiPut(`/quotes/${quoteId}`, payload);
+    return { quoteId: Number(quoteId) };
   }
 );
 
@@ -78,6 +86,17 @@ const quotesSlice = createSlice({
         const id = Number(action.meta.arg);
         state.statusById[id] = "failed";
         state.errorById[id] = action.error?.message || "Failed to load quote";
+      })
+      .addCase(updateQuote.fulfilled, (state, action) => {
+        const { quoteId } = action.payload;
+        // Invalidar el cache del quote para que se recargue
+        delete state.byId[quoteId];
+        delete state.statusById[quoteId];
+        // Actualizar en la lista si existe
+        const listIndex = state.list.findIndex((q) => q.id === quoteId);
+        if (listIndex >= 0) {
+          // El total se actualizará cuando se recargue la lista
+        }
       })
       .addCase(deleteQuote.fulfilled, (state, action) => {
         const deletedId = action.payload;

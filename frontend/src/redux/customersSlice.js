@@ -1,5 +1,5 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
-import { apiGet, apiPost, apiDelete } from "../api";
+import { apiGet, apiPost, apiPut, apiDelete } from "../api";
 
 export const fetchCustomers = createAsyncThunk(
   "customers/fetchCustomers",
@@ -14,6 +14,22 @@ export const createCustomer = createAsyncThunk(
   async (payload) => {
     const json = await apiPost("/customers", payload);
     return json.data; // { id }
+  }
+);
+
+export const fetchCustomerById = createAsyncThunk(
+  "customers/fetchById",
+  async (id) => {
+    const json = await apiGet(`/customers/${id}`);
+    return json.data;
+  }
+);
+
+export const updateCustomer = createAsyncThunk(
+  "customers/updateCustomer",
+  async ({ id, ...payload }) => {
+    await apiPut(`/customers/${id}`, payload);
+    return { id, ...payload };
   }
 );
 
@@ -63,6 +79,32 @@ const customersSlice = createSlice({
         state.createStatus = "failed";
         state.createError =
           action.error?.message || "Failed to create customer";
+      })
+      .addCase(fetchCustomerById.fulfilled, (state, action) => {
+        const customer = action.payload;
+        const index = state.items.findIndex((c) => c.id === customer.id);
+        if (index >= 0) {
+          state.items[index] = customer;
+        } else {
+          state.items.push(customer);
+        }
+      })
+      .addCase(updateCustomer.pending, (state) => {
+        state.createStatus = "loading";
+        state.createError = "";
+      })
+      .addCase(updateCustomer.fulfilled, (state, action) => {
+        state.createStatus = "succeeded";
+        const updated = action.payload;
+        const index = state.items.findIndex((c) => c.id === updated.id);
+        if (index >= 0) {
+          state.items[index] = { ...state.items[index], ...updated };
+        }
+      })
+      .addCase(updateCustomer.rejected, (state, action) => {
+        state.createStatus = "failed";
+        state.createError =
+          action.error?.message || "Failed to update customer";
       })
       .addCase(deleteCustomer.fulfilled, (state, action) => {
         state.items = state.items.filter((c) => c.id !== action.payload);

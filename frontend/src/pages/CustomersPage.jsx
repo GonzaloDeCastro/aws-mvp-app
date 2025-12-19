@@ -5,6 +5,7 @@ import {
   fetchCustomers,
   deleteCustomer,
 } from "../redux/customersSlice";
+import { useNavigate } from "react-router-dom";
 import Modal from "../components/ui/Modal";
 import {
   PrimaryButton,
@@ -92,6 +93,7 @@ function NewCustomerModal({ open, onClose, onSubmit, loading }) {
 
 export default function CustomersPage() {
   const dispatch = useDispatch();
+  const navigate = useNavigate();
   const { items, status, error, createStatus, createError } = useSelector(
     (s) => s.customers
   );
@@ -179,18 +181,28 @@ export default function CustomersPage() {
                   <TableCell>{c.tax_id || "-"}</TableCell>
                   <TableCell>{c.address || "-"}</TableCell>
                   <TableCell>
-                    <DangerButton
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setDeleteModal({
-                          open: true,
-                          customerId: c.id,
-                          customerName: c.name,
-                        });
-                      }}
-                    >
-                      Eliminar
-                    </DangerButton>
+                    <div className="flex gap-2">
+                      <SecondaryButton
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          navigate(`/app/customers/${c.id}/edit`);
+                        }}
+                      >
+                        Editar
+                      </SecondaryButton>
+                      <DangerButton
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setDeleteModal({
+                            open: true,
+                            customerId: c.id,
+                            customerName: c.name,
+                          });
+                        }}
+                      >
+                        Eliminar
+                      </DangerButton>
+                    </div>
                   </TableCell>
                 </TableRow>
               ))}
