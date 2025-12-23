@@ -19,6 +19,7 @@ import Table, {
   TableCell,
 } from "../components/ui/Table";
 import SearchInput from "../components/ui/SearchInput";
+import Select from "../components/ui/Select";
 import { InfoAlert, ErrorAlert } from "../components/ui/Alert";
 import Pagination from "../components/ui/Pagination";
 import ConfirmModal from "../components/ui/ConfirmModal";
@@ -29,6 +30,7 @@ export default function ProductsPage() {
   const { items, status, error } = useSelector((s) => s.products);
 
   const [search, setSearch] = useState("");
+  const [productTypeFilter, setProductTypeFilter] = useState("all"); // "all", "composite", "individual"
   const [deleteModal, setDeleteModal] = useState({
     open: false,
     productId: null,
@@ -40,19 +42,32 @@ export default function ProductsPage() {
   }, [dispatch]);
 
   const filteredItems = useMemo(() => {
+    let filtered = items;
+
+    // Filtrar por tipo de producto (compuesto vs individual)
+    if (productTypeFilter === "composite") {
+      filtered = filtered.filter((p) => p.is_composite === 1);
+    } else if (productTypeFilter === "individual") {
+      filtered = filtered.filter((p) => p.is_composite === 0);
+    }
+
+    // Filtrar por búsqueda de texto
     const term = search.trim().toLowerCase();
-    if (!term) return items;
-    return items.filter((p) => {
-      const sku = p.sku || "";
-      const name = p.name || "";
-      const brand = p.brand || "";
-      return (
-        sku.toLowerCase().includes(term) ||
-        name.toLowerCase().includes(term) ||
-        brand.toLowerCase().includes(term)
-      );
-    });
-  }, [items, search]);
+    if (term) {
+      filtered = filtered.filter((p) => {
+        const sku = p.sku || "";
+        const name = p.name || "";
+        const brand = p.brand || "";
+        return (
+          sku.toLowerCase().includes(term) ||
+          name.toLowerCase().includes(term) ||
+          brand.toLowerCase().includes(term)
+        );
+      });
+    }
+
+    return filtered;
+  }, [items, search, productTypeFilter]);
 
   const handleDelete = async () => {
     if (deleteModal.productId) {
@@ -60,12 +75,20 @@ export default function ProductsPage() {
       setDeleteModal({ open: false, productId: null, productName: "" });
     }
   };
-  console.log("filteredItems", filteredItems);
   return (
     <div className="grid gap-3">
       <Toolbar>
         <ToolbarTitle kicker="Catálogo" title="Productos" />
         <ToolbarActions>
+          <Select
+            value={productTypeFilter}
+            onChange={(e) => setProductTypeFilter(e.target.value)}
+            className="min-w-[200px]"
+          >
+            <option value="all">Todos los productos</option>
+            <option value="composite">Productos compuestos</option>
+            <option value="individual">Productos individuales</option>
+          </Select>
           <SearchInput
             placeholder="Buscar por nombre, SKU o marca..."
             value={search}

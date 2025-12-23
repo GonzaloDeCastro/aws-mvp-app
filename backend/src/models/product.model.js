@@ -51,7 +51,15 @@ export const ProductModel = {
          p.tax_id, 
          p.is_active, 
          p.created_at,
-         t.rate as tax_rate
+         t.rate as tax_rate,
+         CASE 
+           WHEN EXISTS (
+             SELECT 1 FROM product_components pc 
+             WHERE pc.parent_product_id = p.id
+           )
+           THEN 1
+           ELSE 0
+         END as is_composite
        FROM products p
        LEFT JOIN taxes t ON p.tax_id = t.id AND t.is_active = 1
        WHERE p.company_id = :companyId
@@ -111,7 +119,15 @@ export const ProductModel = {
          p.tax_id, 
          p.is_active, 
          p.created_at,
-         t.rate as tax_rate
+         t.rate as tax_rate,
+         CASE 
+           WHEN EXISTS (
+             SELECT 1 FROM product_components pc 
+             WHERE pc.parent_product_id = p.id
+           )
+           THEN 1
+           ELSE 0
+         END as is_composite
        FROM products p
        LEFT JOIN taxes t ON p.tax_id = t.id AND t.is_active = 1
        WHERE p.company_id = :companyId AND p.id = :productId
