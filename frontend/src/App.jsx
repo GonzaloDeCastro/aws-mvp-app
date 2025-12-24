@@ -4,6 +4,9 @@ import AppShell from "./layout/AppShell";
 
 import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
+import VerifyEmailPage from "./pages/VerifyEmailPage";
+import ForgotPasswordPage from "./pages/ForgotPasswordPage";
+import ResetPasswordPage from "./pages/ResetPasswordPage";
 import ProductsPage from "./pages/ProductsPage";
 import ProductCreatePage from "./pages/ProductCreatePage";
 import ProductEditPage from "./pages/ProductEditPage";
@@ -23,6 +26,9 @@ export default function App() {
       <Route path="/" element={<Navigate to="/app/products" replace />} />
       <Route path="/login" element={<LoginPage />} />
       <Route path="/register" element={<RegisterPage />} />
+      <Route path="/verify-email" element={<VerifyEmailPage />} />
+      <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+      <Route path="/reset-password" element={<ResetPasswordPage />} />
 
       <Route element={<RequireAuth />}>
         <Route path="/app" element={<AppShell />}>

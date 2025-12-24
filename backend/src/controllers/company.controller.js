@@ -55,6 +55,14 @@ export const CompanyController = {
         passwordHash,
       });
 
+      // Send verification email
+      try {
+        await authService.sendVerificationEmail(userId);
+      } catch (emailError) {
+        // Log error but don't fail registration if email fails
+        console.error("Failed to send verification email:", emailError);
+      }
+
       // Login the user automatically
       const loginData = await authService.login({ email: userEmail, password });
 

@@ -43,4 +43,17 @@ export const env = {
     secret: required("JWT_SECRET"),
     expiresIn: process.env.JWT_EXPIRES_IN ?? "1d",
   },
+
+  email: {
+    host: process.env.EMAIL_HOST ?? "smtp.gmail.com",
+    port: Number(process.env.EMAIL_PORT ?? 587),
+    secure: process.env.EMAIL_SECURE === "true", // true para 465, false para 587 y otros
+    user: process.env.EMAIL_USER ?? "",
+    password: process.env.EMAIL_PASSWORD ?? "",
+    from: process.env.EMAIL_FROM ?? process.env.EMAIL_USER ?? "",
+  },
+
+  app: {
+    baseUrl: process.env.APP_BASE_URL ?? "http://localhost:5173",
+  },
 };

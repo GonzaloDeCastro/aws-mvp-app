@@ -70,20 +70,28 @@ export default function LoginPage() {
             </button>
           </div>
 
-          <div className="flex items-center gap-2 mt-1">
-            <input
-              type="checkbox"
-              id="rememberMe"
-              checked={rememberMe}
-              onChange={(e) => setRememberMe(e.target.checked)}
-              className="w-4 h-4 rounded border-white/20 bg-white/5 text-[rgba(120,160,255,0.8)] focus:ring-[rgba(120,160,255,0.8)] focus:ring-offset-0 cursor-pointer"
-            />
-            <Label
-              htmlFor="rememberMe"
-              className="text-xs opacity-80 cursor-pointer mb-0"
+          <div className="flex items-center justify-between mt-1">
+            <div className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                id="rememberMe"
+                checked={rememberMe}
+                onChange={(e) => setRememberMe(e.target.checked)}
+                className="w-4 h-4 rounded border-white/20 bg-white/5 text-[rgba(120,160,255,0.8)] focus:ring-[rgba(120,160,255,0.8)] focus:ring-offset-0 cursor-pointer"
+              />
+              <Label
+                htmlFor="rememberMe"
+                className="text-xs opacity-80 cursor-pointer mb-0"
+              >
+                Recordar contraseña
+              </Label>
+            </div>
+            <Link
+              to="/forgot-password"
+              className="text-xs text-[rgba(120,160,255,0.8)] hover:underline"
             >
-              Recordar contraseña
-            </Label>
+              ¿Olvidaste tu contraseña?
+            </Link>
           </div>
 
           <PrimaryButton
