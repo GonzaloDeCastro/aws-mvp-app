@@ -3,7 +3,7 @@ export function PrimaryButton({ children, onClick, disabled, className = "" }) {
     <button
       onClick={onClick}
       disabled={disabled}
-      className={`rounded-xl border border-white/12 bg-[rgba(120,160,255,0.22)] px-3 py-2.5 text-sm font-bold text-[#e8eefc] cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed ${className}`}
+      className={`rounded-xl border border-white/12 bg-[rgba(120,160,255,0.22)] px-3 py-2 text-sm font-bold text-[#e8eefc] cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap ${className}`}
     >
       {children}
     </button>
@@ -20,7 +20,7 @@ export function SecondaryButton({
     <button
       onClick={onClick}
       disabled={disabled}
-      className={`rounded-xl border border-white/12 bg-white/[0.06] px-3 py-2.5 text-sm font-semibold text-[#e8eefc] cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed ${className}`}
+      className={`rounded-xl border border-white/12 bg-white/[0.06] px-3 py-2 text-sm font-semibold text-[#e8eefc] cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap ${className}`}
     >
       {children}
     </button>

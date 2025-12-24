@@ -9,7 +9,7 @@ export default function Select({
     <select
       value={value}
       onChange={onChange}
-      className={`w-full rounded-xl border border-white/12 bg-[rgba(0,0,0,0.22)] px-3 py-2.5 text-[#e8eefc] outline-none ${className}`}
+      className={`rounded-lg border border-white/30 bg-[rgba(0,0,0,0.22)] px-3 py-2 text-sm text-[#e8eefc] outline-none ${className}`}
       {...props}
     >
       {children}

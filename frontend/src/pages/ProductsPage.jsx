@@ -83,7 +83,7 @@ export default function ProductsPage() {
           <Select
             value={productTypeFilter}
             onChange={(e) => setProductTypeFilter(e.target.value)}
-            className="min-w-[200px]"
+            className="min-w-[180px]"
           >
             <option value="all">Todos los productos</option>
             <option value="composite">Productos compuestos</option>

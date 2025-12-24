@@ -19,7 +19,7 @@ export function TableHeader({ children, className = "" }) {
 export function TableHeaderCell({ children, className = "" }) {
   return (
     <th
-      className={`text-left text-xs opacity-80 py-3 px-3 border-b border-white/8 ${className}`}
+      className={`text-left text-xs opacity-80 py-2 px-3 border-b border-white/8 ${className}`}
     >
       {children}
     </th>
@@ -45,7 +45,7 @@ export function TableRow({ children, className = "", onClick }) {
 
 export function TableCell({ children, className = "" }) {
   return (
-    <td className={`py-3 px-3 border-b border-white/6 text-sm ${className}`}>
+    <td className={`py-2 px-3 border-b border-white/6 text-sm ${className}`}>
       {children}
     </td>
   );
