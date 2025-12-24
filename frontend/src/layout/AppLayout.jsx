@@ -7,6 +7,7 @@ import { logout } from "../redux/authSlice";
 import { fetchCompany } from "../redux/companySlice";
 import { CiLogout } from "react-icons/ci";
 import ConfirmModal from "../components/ui/ConfirmModal";
+import { API_BASE_URL } from "../config";
 
 export default function AppLayout({ children }) {
   const dispatch = useDispatch();
@@ -150,6 +151,7 @@ export default function AppLayout({ children }) {
       </aside>
 
       <main className="flex-1 p-4 flex flex-col gap-3 min-h-0 overflow-auto">
+        {user && !user.emailVerified && <EmailVerificationBanner user={user} />}
         <section className="p-1">{children}</section>
       </main>
 
@@ -163,6 +165,77 @@ export default function AppLayout({ children }) {
         cancelText="Cancelar"
         confirmVariant="danger"
       />
+    </div>
+  );
+}
+
+// Componente para mostrar banner de verificación de email
+function EmailVerificationBanner({ user }) {
+  const [status, setStatus] = useState("idle"); // idle, loading, success, error
+  const [dismissed, setDismissed] = useState(false);
+
+  const handleResend = async () => {
+    setStatus("loading");
+    try {
+      const res = await fetch(`${API_BASE_URL}/auth/resend-verification`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: user.email }),
+      });
+
+      if (!res.ok) {
+        throw new Error("Error al reenviar el email");
+      }
+
+      setStatus("success");
+      setTimeout(() => setStatus("idle"), 3000);
+    } catch (error) {
+      setStatus("error");
+      setTimeout(() => setStatus("idle"), 3000);
+    }
+  };
+
+  if (dismissed) return null;
+
+  return (
+    <div className="p-3 rounded-[14px] border border-[rgba(255,193,7,0.4)] bg-[rgba(255,193,7,0.1)] text-[#ffd700]">
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex-1">
+          <div className="font-semibold text-sm mb-1">
+            ⚠️ Verifica tu correo electrónico
+          </div>
+          <div className="text-xs opacity-90">
+            Por favor verifica tu correo electrónico para acceder a todas las
+            funcionalidades. Revisa tu bandeja de entrada.
+          </div>
+          {status === "success" && (
+            <div className="text-xs mt-2 text-green-300">
+              ✓ Email de verificación enviado. Revisa tu bandeja de entrada.
+            </div>
+          )}
+          {status === "error" && (
+            <div className="text-xs mt-2 text-red-300">
+              ✗ Error al enviar el email. Intenta nuevamente.
+            </div>
+          )}
+        </div>
+        <div className="flex gap-2 items-center">
+          <button
+            onClick={handleResend}
+            disabled={status === "loading"}
+            className="px-3 py-1.5 text-xs rounded-lg border border-[rgba(255,193,7,0.5)] bg-[rgba(255,193,7,0.15)] hover:bg-[rgba(255,193,7,0.25)] disabled:opacity-50 cursor-pointer"
+          >
+            {status === "loading" ? "Enviando..." : "Reenviar email"}
+          </button>
+          <button
+            onClick={() => setDismissed(true)}
+            className="px-2 py-1 text-xs opacity-70 hover:opacity-100 cursor-pointer"
+            aria-label="Cerrar"
+          >
+            ✕
+          </button>
+        </div>
+      </div>
     </div>
   );
 }

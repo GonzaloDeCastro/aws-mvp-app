@@ -35,6 +35,14 @@ export const authService = {
     const ok = await bcrypt.compare(password, user.password_hash);
     if (!ok) throw new HttpError(401, "Invalid credentials");
 
+    // Verificar si se requiere verificación de email (configurable)
+    if (env.app.requireEmailVerification && user.email_verified !== 1) {
+      throw new HttpError(
+        403,
+        "Por favor verifica tu correo electrónico antes de iniciar sesión. Revisa tu bandeja de entrada."
+      );
+    }
+
     const token = jwt.sign(
       { userId: user.id, companyId: user.company_id, email: user.email },
       env.jwt.secret,

@@ -152,6 +152,34 @@ Para probar en desarrollo sin enviar emails reales, puedes usar:
 - Los tokens se marcan como usados después de ser utilizados
 - Por seguridad, no se revela si un email existe o no en las respuestas
 
+## Verificación de Email Requerida
+
+Por defecto, el sistema **permite login sin verificar el email**, pero muestra un banner de advertencia en la aplicación.
+
+### Opción 1: Banner de Advertencia (Por defecto)
+
+Si el usuario no ha verificado su email, verá un banner amarillo en la parte superior de la aplicación con:
+
+- Mensaje de advertencia
+- Botón para reenviar el email de verificación
+- Opción para cerrar el banner
+
+### Opción 2: Requerir Verificación Antes de Login
+
+Si quieres que los usuarios **deban verificar su email antes de poder iniciar sesión**, agrega esta variable a tu `.env.local`:
+
+```env
+REQUIRE_EMAIL_VERIFICATION=true
+```
+
+Con esta opción activada:
+
+- Los usuarios no podrán iniciar sesión hasta verificar su email
+- Recibirán un error claro: "Por favor verifica tu correo electrónico antes de iniciar sesión"
+- Deberán hacer clic en el enlace del email de verificación primero
+
+**Recomendación**: Para desarrollo, deja esta opción en `false` (o sin configurar). Para producción, considera activarla según tus necesidades de seguridad.
+
 ## Flujo de Usuario en el Frontend
 
 ### Verificación de Email

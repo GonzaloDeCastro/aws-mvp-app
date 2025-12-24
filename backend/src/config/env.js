@@ -55,5 +55,6 @@ export const env = {
 
   app: {
     baseUrl: process.env.APP_BASE_URL ?? "http://localhost:5173",
+    requireEmailVerification: process.env.REQUIRE_EMAIL_VERIFICATION === "true", // Por defecto: false (permite login sin verificar)
   },
 };
