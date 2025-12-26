@@ -141,6 +141,38 @@ export const ProductModel = {
     return rows[0] ?? null;
   },
 
+  async findBySkuOrName({ companyId, sku, name }) {
+    // Priorizar búsqueda por SKU si está disponible, sino buscar por nombre
+    if (sku) {
+      const [rowsBySku] = await pool.execute(
+        `SELECT id, sku, name 
+         FROM products 
+         WHERE company_id = ? AND sku = ?
+         LIMIT 1`,
+        [companyId, sku]
+      );
+      if (rowsBySku.length > 0) {
+        return rowsBySku[0];
+      }
+    }
+
+    // Si no se encontró por SKU o no hay SKU, buscar por nombre
+    if (name) {
+      const [rowsByName] = await pool.execute(
+        `SELECT id, sku, name 
+         FROM products 
+         WHERE company_id = ? AND name = ?
+         LIMIT 1`,
+        [companyId, name]
+      );
+      if (rowsByName.length > 0) {
+        return rowsByName[0];
+      }
+    }
+
+    return null;
+  },
+
   async getCategories(productId) {
     const [rows] = await pool.execute(
       `SELECT c.id, c.name
@@ -423,5 +455,119 @@ export const ProductModel = {
       { companyId, productId }
     );
     return result.affectedRows;
+  },
+
+  async createBatch({ companyId, products }) {
+    const connection = await pool.getConnection();
+    try {
+      await connection.beginTransaction();
+      const createdIds = [];
+      const updatedIds = [];
+
+      for (const product of products) {
+        const {
+          sku = null,
+          name,
+          brand = null,
+          supplier = null,
+          description = null,
+          link = null,
+          stockQty = 0,
+          price = 0,
+          currency = "ARS",
+          taxId = null,
+          categoryIds = [],
+        } = product;
+
+        // Buscar producto existente por SKU o nombre
+        const existing = await this.findBySkuOrName({ companyId, sku, name });
+
+        let productId;
+        if (existing) {
+          // Actualizar producto existente
+          productId = existing.id;
+
+          // Actualizar campos del producto (principalmente precio)
+          await connection.execute(
+            `UPDATE products 
+             SET brand = ?, supplier = ?, description = ?, link = ?, stock_qty = ?, price = ?, currency = ?, tax_id = ?
+             WHERE id = ?`,
+            [
+              brand,
+              supplier,
+              description,
+              link,
+              stockQty,
+              price,
+              currency,
+              taxId || null,
+              productId,
+            ]
+          );
+
+          // Actualizar categorías
+          // Eliminar categorías existentes
+          await connection.execute(
+            `DELETE FROM product_categories WHERE product_id = ?`,
+            [productId]
+          );
+          // Insertar nuevas categorías si existen
+          if (categoryIds && categoryIds.length > 0) {
+            for (const catId of categoryIds) {
+              await connection.execute(
+                `INSERT INTO product_categories (product_id, category_id) VALUES (?, ?)`,
+                [productId, catId]
+              );
+            }
+          }
+
+          updatedIds.push(productId);
+        } else {
+          // Crear nuevo producto
+          const [result] = await connection.execute(
+            `INSERT INTO products (company_id, sku, name, brand, supplier, description, link, stock_qty, price, currency, tax_id)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            [
+              companyId,
+              sku,
+              name,
+              brand,
+              supplier,
+              description,
+              link,
+              stockQty,
+              price,
+              currency,
+              taxId || null,
+            ]
+          );
+          productId = result.insertId;
+          createdIds.push(productId);
+
+          // Insertar categorías si existen
+          if (categoryIds && categoryIds.length > 0) {
+            for (const catId of categoryIds) {
+              await connection.execute(
+                `INSERT INTO product_categories (product_id, category_id) VALUES (?, ?)`,
+                [productId, catId]
+              );
+            }
+          }
+        }
+      }
+
+      await connection.commit();
+      return {
+        createdIds,
+        updatedIds,
+        created: createdIds.length,
+        updated: updatedIds.length,
+      };
+    } catch (error) {
+      await connection.rollback();
+      throw error;
+    } finally {
+      connection.release();
+    }
   },
 };

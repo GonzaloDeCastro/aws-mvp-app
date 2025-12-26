@@ -191,4 +191,45 @@ export const ProductController = {
       next(e);
     }
   },
+
+  async createBatch(req, res, next) {
+    try {
+      const companyId = Number(req.user?.companyId);
+      if (!companyId) throw new HttpError(401, "Unauthorized");
+
+      const { products } = req.body;
+
+      if (!Array.isArray(products) || products.length === 0) {
+        throw new HttpError(400, "products must be a non-empty array");
+      }
+
+      // Validar cada producto
+      for (const product of products) {
+        if (!product.name) {
+          throw new HttpError(400, "name is required for all products");
+        }
+        if (Number(product.price) < 0) {
+          throw new HttpError(400, "price must be >= 0");
+        }
+        if (Number(product.stockQty) < 0) {
+          throw new HttpError(400, "stockQty must be >= 0");
+        }
+      }
+
+      const result = await ProductModel.createBatch({ companyId, products });
+
+      res.status(201).json({
+        ok: true,
+        data: {
+          createdIds: result.createdIds,
+          updatedIds: result.updatedIds,
+          created: result.created,
+          updated: result.updated,
+          total: result.created + result.updated,
+        },
+      });
+    } catch (e) {
+      next(e);
+    }
+  },
 };

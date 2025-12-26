@@ -46,6 +46,14 @@ export const createProduct = createAsyncThunk(
   }
 );
 
+export const createProductsBatch = createAsyncThunk(
+  "products/createProductsBatch",
+  async (payload) => {
+    const json = await apiPost("/products/batch", payload);
+    return json.data; // { ids, count }
+  }
+);
+
 export const updateProduct = createAsyncThunk(
   "products/updateProduct",
   async ({ id, ...payload }) => {
@@ -140,6 +148,17 @@ const productsSlice = createSlice({
       .addCase(createProduct.rejected, (state, action) => {
         state.createStatus = "failed";
         state.createError = action.error?.message || "Failed to create product";
+      })
+      .addCase(createProductsBatch.pending, (state) => {
+        state.createStatus = "loading";
+        state.createError = "";
+      })
+      .addCase(createProductsBatch.fulfilled, (state) => {
+        state.createStatus = "succeeded";
+      })
+      .addCase(createProductsBatch.rejected, (state, action) => {
+        state.createStatus = "failed";
+        state.createError = action.error?.message || "Failed to import products";
       })
       .addCase(updateProduct.pending, (state) => {
         state.updateStatus = "loading";
