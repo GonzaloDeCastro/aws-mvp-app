@@ -52,6 +52,7 @@ export default function ProductCreatePage() {
     brand: "",
     supplierId: "",
     description: "",
+    link: "",
     stockQty: 0,
     price: 0,
     currency: "ARS",
@@ -251,6 +252,7 @@ export default function ProductCreatePage() {
           brand: form.brand.trim() || null,
           supplier: selectedSupplier ? selectedSupplier.fantasy_name : null,
           description: form.description.trim() || null,
+          link: form.link.trim() || null,
           stockQty: Number(form.stockQty) || 0,
           price: hasComponents ? calculatedPrice : Number(form.price) || 0,
           currency: hasComponents ? "ARS" : form.currency || "ARS",
@@ -369,6 +371,16 @@ export default function ProductCreatePage() {
               value={form.description}
               onChange={set("description")}
               placeholder="Descripción opcional"
+            />
+          </div>
+
+          <div className="col-span-2">
+            <Label>Link (URL relacionada a precios)</Label>
+            <Input
+              type="url"
+              value={form.link}
+              onChange={set("link")}
+              placeholder="https://ejemplo.com/precio (opcional)"
             />
           </div>
 

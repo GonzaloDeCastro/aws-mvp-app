@@ -17,7 +17,8 @@ export const ProductModel = {
          p.name, 
          p.brand, 
          p.supplier,
-         p.description, 
+         p.description,
+         p.link,
          p.stock_qty, 
          COALESCE(
            CASE 
@@ -86,7 +87,8 @@ export const ProductModel = {
          p.name, 
          p.brand, 
          p.supplier,
-         p.description, 
+         p.description,
+         p.link,
          p.stock_qty, 
          COALESCE(
            CASE 
@@ -208,6 +210,7 @@ export const ProductModel = {
     brand,
     supplier,
     description,
+    link,
     stockQty,
     price,
     currency,
@@ -225,8 +228,8 @@ export const ProductModel = {
 
       // Insertar producto
       const [result] = await connection.execute(
-        `INSERT INTO products (company_id, sku, name, brand, supplier, description, stock_qty, price, currency, tax_id)
-         VALUES (:companyId, :sku, :name, :brand, :supplier, :description, :stockQty, :price, :currency, :taxId)`,
+        `INSERT INTO products (company_id, sku, name, brand, supplier, description, link, stock_qty, price, currency, tax_id)
+         VALUES (:companyId, :sku, :name, :brand, :supplier, :description, :link, :stockQty, :price, :currency, :taxId)`,
         {
           companyId,
           sku,
@@ -234,6 +237,7 @@ export const ProductModel = {
           brand,
           supplier,
           description,
+          link,
           stockQty,
           price,
           currency: finalCurrency,
@@ -288,6 +292,7 @@ export const ProductModel = {
     brand,
     supplier,
     description,
+    link,
     stockQty,
     price,
     currency,
@@ -327,6 +332,7 @@ export const ProductModel = {
         "brand = :brand",
         "supplier = :supplier",
         "description = :description",
+        "link = :link",
         "stock_qty = :stockQty",
         "currency = :currency",
         "tax_id = :taxId",
@@ -350,6 +356,7 @@ export const ProductModel = {
           brand,
           supplier,
           description,
+          link,
           stockQty,
           ...(willBeComposite ? {} : { price }),
           currency: finalCurrency,
