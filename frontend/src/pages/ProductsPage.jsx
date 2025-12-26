@@ -261,10 +261,7 @@ export default function ProductsPage() {
 
           const supplierMap = new Map();
           suppliers.forEach((sup) => {
-            supplierMap.set(
-              normalizeColumnName(sup.fantasy_name),
-              sup.fantasy_name
-            );
+            supplierMap.set(normalizeColumnName(sup.fantasy_name), sup.id);
           });
 
           // Procesar filas
@@ -315,10 +312,7 @@ export default function ProductsPage() {
           if (suppliersToCreate.size > 0) {
             const updatedSuppliers = await dispatch(fetchSuppliers()).unwrap();
             updatedSuppliers.forEach((sup) => {
-              supplierMap.set(
-                normalizeColumnName(sup.fantasy_name),
-                sup.fantasy_name
-              );
+              supplierMap.set(normalizeColumnName(sup.fantasy_name), sup.id);
             });
           }
 
@@ -367,10 +361,10 @@ export default function ProductsPage() {
               }
 
               // Buscar proveedor
-              let supplier = null;
+              let supplierId = null;
               if (proveedorName) {
                 const normalizedSupName = normalizeColumnName(proveedorName);
-                supplier = supplierMap.get(normalizedSupName) || null;
+                supplierId = supplierMap.get(normalizedSupName) || null;
               }
 
               // Validar moneda
@@ -382,7 +376,7 @@ export default function ProductsPage() {
                 sku: sku || null,
                 name,
                 brand: null, // No hay columna marca
-                supplier,
+                supplierId,
                 description: null,
                 link: link || null,
                 stockQty: stock,

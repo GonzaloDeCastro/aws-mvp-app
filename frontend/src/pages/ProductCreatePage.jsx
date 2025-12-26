@@ -241,16 +241,12 @@ export default function ProductCreatePage() {
     }
 
     try {
-      const selectedSupplier = form.supplierId
-        ? suppliers.find((s) => s.id === Number(form.supplierId))
-        : null;
-
       await dispatch(
         createProduct({
           sku: form.sku.trim() || null,
           name: form.name.trim(),
           brand: form.brand.trim() || null,
-          supplier: selectedSupplier ? selectedSupplier.fantasy_name : null,
+          supplierId: form.supplierId ? Number(form.supplierId) : null,
           description: form.description.trim() || null,
           link: form.link.trim() || null,
           stockQty: Number(form.stockQty) || 0,

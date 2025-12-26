@@ -16,7 +16,8 @@ export const ProductModel = {
          p.sku, 
          p.name, 
          p.brand, 
-         p.supplier,
+         p.supplier_id,
+         s.fantasy_name AS supplier,
          p.description,
          p.link,
          p.stock_qty, 
@@ -64,6 +65,7 @@ export const ProductModel = {
          END as is_composite
        FROM products p
        LEFT JOIN taxes t ON p.tax_id = t.id AND t.is_active = 1
+       LEFT JOIN suppliers s ON p.supplier_id = s.id
        WHERE p.company_id = :companyId
        ORDER BY p.id DESC`,
       { companyId, dollarRate }
@@ -86,7 +88,8 @@ export const ProductModel = {
          p.sku, 
          p.name, 
          p.brand, 
-         p.supplier,
+         p.supplier_id,
+         s.fantasy_name AS supplier,
          p.description,
          p.link,
          p.stock_qty, 
@@ -134,6 +137,7 @@ export const ProductModel = {
          END as is_composite
        FROM products p
        LEFT JOIN taxes t ON p.tax_id = t.id AND t.is_active = 1
+       LEFT JOIN suppliers s ON p.supplier_id = s.id
        WHERE p.company_id = :companyId AND p.id = :productId
        LIMIT 1`,
       { companyId, productId, dollarRate }
@@ -240,7 +244,7 @@ export const ProductModel = {
     sku,
     name,
     brand,
-    supplier,
+    supplierId,
     description,
     link,
     stockQty,
@@ -260,14 +264,14 @@ export const ProductModel = {
 
       // Insertar producto
       const [result] = await connection.execute(
-        `INSERT INTO products (company_id, sku, name, brand, supplier, description, link, stock_qty, price, currency, tax_id)
-         VALUES (:companyId, :sku, :name, :brand, :supplier, :description, :link, :stockQty, :price, :currency, :taxId)`,
+        `INSERT INTO products (company_id, sku, name, brand, supplier_id, description, link, stock_qty, price, currency, tax_id)
+         VALUES (:companyId, :sku, :name, :brand, :supplierId, :description, :link, :stockQty, :price, :currency, :taxId)`,
         {
           companyId,
           sku,
           name,
           brand,
-          supplier,
+          supplierId: supplierId || null,
           description,
           link,
           stockQty,
@@ -322,7 +326,7 @@ export const ProductModel = {
     sku,
     name,
     brand,
-    supplier,
+    supplierId,
     description,
     link,
     stockQty,
@@ -362,7 +366,7 @@ export const ProductModel = {
         "sku = :sku",
         "name = :name",
         "brand = :brand",
-        "supplier = :supplier",
+        "supplier_id = :supplierId",
         "description = :description",
         "link = :link",
         "stock_qty = :stockQty",
@@ -386,7 +390,7 @@ export const ProductModel = {
           sku,
           name,
           brand,
-          supplier,
+          supplierId: supplierId !== undefined ? supplierId || null : undefined,
           description,
           link,
           stockQty,
@@ -469,7 +473,7 @@ export const ProductModel = {
           sku = null,
           name,
           brand = null,
-          supplier = null,
+          supplierId = null,
           description = null,
           link = null,
           stockQty = 0,
@@ -490,11 +494,11 @@ export const ProductModel = {
           // Actualizar campos del producto (principalmente precio)
           await connection.execute(
             `UPDATE products 
-             SET brand = ?, supplier = ?, description = ?, link = ?, stock_qty = ?, price = ?, currency = ?, tax_id = ?
+             SET brand = ?, supplier_id = ?, description = ?, link = ?, stock_qty = ?, price = ?, currency = ?, tax_id = ?
              WHERE id = ?`,
             [
               brand,
-              supplier,
+              supplierId || null,
               description,
               link,
               stockQty,
@@ -525,14 +529,14 @@ export const ProductModel = {
         } else {
           // Crear nuevo producto
           const [result] = await connection.execute(
-            `INSERT INTO products (company_id, sku, name, brand, supplier, description, link, stock_qty, price, currency, tax_id)
+            `INSERT INTO products (company_id, sku, name, brand, supplier_id, description, link, stock_qty, price, currency, tax_id)
              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
             [
               companyId,
               sku,
               name,
               brand,
-              supplier,
+              supplierId || null,
               description,
               link,
               stockQty,

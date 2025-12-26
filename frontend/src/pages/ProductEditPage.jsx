@@ -102,17 +102,14 @@ export default function ProductEditPage() {
 
   // Pre-llenar formulario cuando se carga el producto
   useEffect(() => {
-    if (currentProduct && suppliers.length > 0) {
-      // Buscar el supplier por su fantasy_name
-      const supplierMatch = currentProduct.supplier
-        ? suppliers.find((s) => s.fantasy_name === currentProduct.supplier)
-        : null;
-
+    if (currentProduct) {
       setForm({
         sku: currentProduct.sku || "",
         name: currentProduct.name || "",
         brand: currentProduct.brand || "",
-        supplierId: supplierMatch ? String(supplierMatch.id) : "",
+        supplierId: currentProduct.supplier_id
+          ? String(currentProduct.supplier_id)
+          : "",
         description: currentProduct.description || "",
         link: currentProduct.link || "",
         stockQty: currentProduct.stock_qty || 0,
@@ -126,7 +123,7 @@ export default function ProductEditPage() {
         components: currentProduct.components || [],
       });
     }
-  }, [currentProduct, suppliers]);
+  }, [currentProduct]);
 
   const set = (k) => (e) => {
     let value = e.target.value;
@@ -290,17 +287,13 @@ export default function ProductEditPage() {
     }
 
     try {
-      const selectedSupplier = form.supplierId
-        ? suppliers.find((s) => s.id === Number(form.supplierId))
-        : null;
-
       await dispatch(
         updateProduct({
           id: productId,
           sku: form.sku.trim() || null,
           name: form.name.trim(),
           brand: form.brand.trim() || null,
-          supplier: selectedSupplier ? selectedSupplier.fantasy_name : null,
+          supplierId: form.supplierId ? Number(form.supplierId) : null,
           description: form.description.trim() || null,
           link: form.link.trim() || null,
           stockQty: Number(form.stockQty) || 0,
