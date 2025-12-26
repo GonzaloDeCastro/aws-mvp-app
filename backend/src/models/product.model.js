@@ -16,6 +16,7 @@ export const ProductModel = {
          p.sku, 
          p.name, 
          p.brand, 
+         p.supplier,
          p.description, 
          p.stock_qty, 
          COALESCE(
@@ -84,6 +85,7 @@ export const ProductModel = {
          p.sku, 
          p.name, 
          p.brand, 
+         p.supplier,
          p.description, 
          p.stock_qty, 
          COALESCE(
@@ -204,6 +206,7 @@ export const ProductModel = {
     sku,
     name,
     brand,
+    supplier,
     description,
     stockQty,
     price,
@@ -222,13 +225,14 @@ export const ProductModel = {
 
       // Insertar producto
       const [result] = await connection.execute(
-        `INSERT INTO products (company_id, sku, name, brand, description, stock_qty, price, currency, tax_id)
-         VALUES (:companyId, :sku, :name, :brand, :description, :stockQty, :price, :currency, :taxId)`,
+        `INSERT INTO products (company_id, sku, name, brand, supplier, description, stock_qty, price, currency, tax_id)
+         VALUES (:companyId, :sku, :name, :brand, :supplier, :description, :stockQty, :price, :currency, :taxId)`,
         {
           companyId,
           sku,
           name,
           brand,
+          supplier,
           description,
           stockQty,
           price,
@@ -282,6 +286,7 @@ export const ProductModel = {
     sku,
     name,
     brand,
+    supplier,
     description,
     stockQty,
     price,
@@ -320,6 +325,7 @@ export const ProductModel = {
         "sku = :sku",
         "name = :name",
         "brand = :brand",
+        "supplier = :supplier",
         "description = :description",
         "stock_qty = :stockQty",
         "currency = :currency",
@@ -342,6 +348,7 @@ export const ProductModel = {
           sku,
           name,
           brand,
+          supplier,
           description,
           stockQty,
           ...(willBeComposite ? {} : { price }),

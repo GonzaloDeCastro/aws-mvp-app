@@ -10,6 +10,7 @@ import {
   createCategory,
   resetUpdateStatus,
 } from "../redux/productsSlice";
+import { fetchSuppliers } from "../redux/suppliersSlice";
 import { fetchCompany } from "../redux/companySlice";
 import Card from "../components/ui/Card";
 import Modal from "../components/ui/Modal";
@@ -38,6 +39,9 @@ export default function ProductEditPage() {
     items: products,
   } = useSelector((s) => s.products);
 
+  const suppliers = useSelector((s) => s.suppliers.items);
+  const suppliersStatus = useSelector((s) => s.suppliers.status);
+
   const company = useSelector((s) => s.company.current);
   const companyStatus = useSelector((s) => s.company.status);
 
@@ -45,6 +49,7 @@ export default function ProductEditPage() {
     sku: "",
     name: "",
     brand: "",
+    supplierId: "",
     description: "",
     stockQty: 0,
     price: 0,
@@ -76,6 +81,9 @@ export default function ProductEditPage() {
           dispatch(fetchProducts()),
           dispatch(fetchTaxes()),
         ]);
+        if (suppliersStatus === "idle") {
+          dispatch(fetchSuppliers());
+        }
         if (companyStatus === "idle") {
           dispatch(fetchCompany());
         }
@@ -93,11 +101,17 @@ export default function ProductEditPage() {
 
   // Pre-llenar formulario cuando se carga el producto
   useEffect(() => {
-    if (currentProduct) {
+    if (currentProduct && suppliers.length > 0) {
+      // Buscar el supplier por su fantasy_name
+      const supplierMatch = currentProduct.supplier
+        ? suppliers.find((s) => s.fantasy_name === currentProduct.supplier)
+        : null;
+
       setForm({
         sku: currentProduct.sku || "",
         name: currentProduct.name || "",
         brand: currentProduct.brand || "",
+        supplierId: supplierMatch ? String(supplierMatch.id) : "",
         description: currentProduct.description || "",
         stockQty: currentProduct.stock_qty || 0,
         price: currentProduct.price || 0,
@@ -110,7 +124,7 @@ export default function ProductEditPage() {
         components: currentProduct.components || [],
       });
     }
-  }, [currentProduct]);
+  }, [currentProduct, suppliers]);
 
   const set = (k) => (e) => {
     let value = e.target.value;
@@ -138,6 +152,11 @@ export default function ProductEditPage() {
   const handleCategoryChange = (e) => {
     const value = e.target.value;
     setForm((v) => ({ ...v, categoryId: value === "none" ? "" : value }));
+  };
+
+  const handleSupplierChange = (e) => {
+    const value = e.target.value;
+    setForm((v) => ({ ...v, supplierId: value === "none" ? "" : value }));
   };
 
   const handleCreateCategory = async () => {
@@ -269,12 +288,17 @@ export default function ProductEditPage() {
     }
 
     try {
+      const selectedSupplier = form.supplierId
+        ? suppliers.find((s) => s.id === Number(form.supplierId))
+        : null;
+
       await dispatch(
         updateProduct({
           id: productId,
           sku: form.sku.trim() || null,
           name: form.name.trim(),
           brand: form.brand.trim() || null,
+          supplier: selectedSupplier ? selectedSupplier.fantasy_name : null,
           description: form.description.trim() || null,
           stockQty: Number(form.stockQty) || 0,
           price: hasComponents ? calculatedPrice : Number(form.price) || 0,
@@ -370,6 +394,22 @@ export default function ProductEditPage() {
               onChange={set("brand")}
               placeholder="Marca opcional"
             />
+          </div>
+
+          <div className="w-full">
+            <Label>Proveedor</Label>
+            <Select
+              value={form.supplierId || "none"}
+              onChange={handleSupplierChange}
+            >
+              <option value="none">Ninguno</option>
+              {suppliers.map((supplier) => (
+                <option key={supplier.id} value={supplier.id}>
+                  {supplier.fantasy_name}
+                  {supplier.legal_name ? ` - ${supplier.legal_name}` : ""}
+                </option>
+              ))}
+            </Select>
           </div>
 
           <div className="w-full">

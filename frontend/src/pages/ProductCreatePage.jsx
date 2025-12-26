@@ -9,6 +9,7 @@ import {
   createCategory,
   resetCreateStatus,
 } from "../redux/productsSlice";
+import { fetchSuppliers } from "../redux/suppliersSlice";
 import { fetchCompany } from "../redux/companySlice";
 import Card from "../components/ui/Card";
 import Modal from "../components/ui/Modal";
@@ -39,6 +40,9 @@ export default function ProductCreatePage() {
     items: products,
   } = useSelector((s) => s.products);
 
+  const suppliers = useSelector((s) => s.suppliers.items);
+  const suppliersStatus = useSelector((s) => s.suppliers.status);
+
   const company = useSelector((s) => s.company.current);
   const companyStatus = useSelector((s) => s.company.status);
 
@@ -46,6 +50,7 @@ export default function ProductCreatePage() {
     sku: "",
     name: "",
     brand: "",
+    supplierId: "",
     description: "",
     stockQty: 0,
     price: 0,
@@ -63,10 +68,13 @@ export default function ProductCreatePage() {
     dispatch(fetchCategories());
     dispatch(fetchProducts());
     dispatch(fetchTaxes());
+    if (suppliersStatus === "idle") {
+      dispatch(fetchSuppliers());
+    }
     if (companyStatus === "idle") {
       dispatch(fetchCompany());
     }
-  }, [dispatch, companyStatus]);
+  }, [dispatch, companyStatus, suppliersStatus]);
 
   const set = (k) => (e) => {
     let value = e.target.value;
@@ -94,6 +102,11 @@ export default function ProductCreatePage() {
   const handleCategoryChange = (e) => {
     const value = e.target.value;
     setForm((v) => ({ ...v, categoryId: value === "none" ? "" : value }));
+  };
+
+  const handleSupplierChange = (e) => {
+    const value = e.target.value;
+    setForm((v) => ({ ...v, supplierId: value === "none" ? "" : value }));
   };
 
   const handleCreateCategory = async () => {
@@ -227,11 +240,16 @@ export default function ProductCreatePage() {
     }
 
     try {
+      const selectedSupplier = form.supplierId
+        ? suppliers.find((s) => s.id === Number(form.supplierId))
+        : null;
+
       await dispatch(
         createProduct({
           sku: form.sku.trim() || null,
           name: form.name.trim(),
           brand: form.brand.trim() || null,
+          supplier: selectedSupplier ? selectedSupplier.fantasy_name : null,
           description: form.description.trim() || null,
           stockQty: Number(form.stockQty) || 0,
           price: hasComponents ? calculatedPrice : Number(form.price) || 0,
@@ -305,6 +323,22 @@ export default function ProductCreatePage() {
               onChange={set("brand")}
               placeholder="Marca opcional"
             />
+          </div>
+
+          <div className="w-full">
+            <Label>Proveedor</Label>
+            <Select
+              value={form.supplierId || "none"}
+              onChange={handleSupplierChange}
+            >
+              <option value="none">Ninguno</option>
+              {suppliers.map((supplier) => (
+                <option key={supplier.id} value={supplier.id}>
+                  {supplier.fantasy_name}
+                  {supplier.legal_name ? ` - ${supplier.legal_name}` : ""}
+                </option>
+              ))}
+            </Select>
           </div>
 
           <div className="w-full">

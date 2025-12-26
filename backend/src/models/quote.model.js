@@ -16,6 +16,7 @@ export const QuoteModel = {
 
         cu.id AS customer_id,
         cu.name AS customer_name,
+        cu.legal_name AS customer_legal_name,
         cu.email AS customer_email,
         cu.phone AS customer_phone,
         cu.address AS customer_address,
@@ -43,6 +44,7 @@ export const QuoteModel = {
         ? {
             id: row.customer_id,
             name: row.customer_name,
+            legalName: row.customer_legal_name,
             email: row.customer_email,
             phone: row.customer_phone,
             address: row.customer_address,
@@ -76,6 +78,7 @@ export const QuoteModel = {
 
         cu.id AS customer_id,
         cu.name AS customer_name,
+        cu.legal_name AS customer_legal_name,
         cu.email AS customer_email,
         cu.phone AS customer_phone,
         cu.address AS customer_address,
@@ -151,6 +154,7 @@ export const QuoteModel = {
         ? {
             id: header.customer_id,
             name: header.customer_name,
+            legalName: header.customer_legal_name,
             email: header.customer_email,
             phone: header.customer_phone,
             address: header.customer_address,

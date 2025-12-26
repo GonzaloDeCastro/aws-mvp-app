@@ -1,10 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import {
-  createCustomer,
-  fetchCustomers,
-  deleteCustomer,
-} from "../redux/customersSlice";
+  createSupplier,
+  fetchSuppliers,
+  deleteSupplier,
+} from "../redux/suppliersSlice";
 import { useNavigate } from "react-router-dom";
 import Modal from "../components/ui/Modal";
 import {
@@ -30,9 +30,9 @@ import { InfoAlert, ErrorAlert } from "../components/ui/Alert";
 import Pagination from "../components/ui/Pagination";
 import ConfirmModal from "../components/ui/ConfirmModal";
 
-function NewCustomerModal({ open, onClose, onSubmit, loading }) {
+function NewSupplierModal({ open, onClose, onSubmit, loading }) {
   const initialForm = {
-    name: "",
+    fantasyName: "",
     legalName: "",
     email: "",
     phone: "",
@@ -52,7 +52,7 @@ function NewCustomerModal({ open, onClose, onSubmit, loading }) {
   return (
     <Modal open={open} onClose={onClose}>
       <div className="flex items-center justify-between p-1 mb-1">
-        <div className="font-bold">Nuevo cliente</div>
+        <div className="font-bold">Nuevo proveedor</div>
         <button
           type="button"
           className="border border-white/20 bg-white/[0.06] text-[#e8eefc] rounded-lg px-2.5 py-1.5 cursor-pointer"
@@ -63,8 +63,8 @@ function NewCustomerModal({ open, onClose, onSubmit, loading }) {
       </div>
 
       <div className="grid grid-cols-1 gap-2 p-2">
-        <Label>Nombre *</Label>
-        <Input value={form.name} onChange={set("name")} />
+        <Label>Nombre de Fantasía *</Label>
+        <Input value={form.fantasyName} onChange={set("fantasyName")} />
 
         <Label>Razón Social</Label>
         <Input value={form.legalName} onChange={set("legalName")} />
@@ -85,7 +85,7 @@ function NewCustomerModal({ open, onClose, onSubmit, loading }) {
       <div className="flex justify-end gap-2.5 p-2">
         <SecondaryButton onClick={onClose}>Cancelar</SecondaryButton>
         <PrimaryButton
-          disabled={loading || !form.name.trim()}
+          disabled={loading || !form.fantasyName.trim()}
           onClick={() => onSubmit(form)}
         >
           {loading ? "Creando..." : "Crear"}
@@ -95,37 +95,37 @@ function NewCustomerModal({ open, onClose, onSubmit, loading }) {
   );
 }
 
-export default function CustomersPage() {
+export default function SuppliersPage() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const { items, status, error, createStatus, createError } = useSelector(
-    (s) => s.customers
+    (s) => s.suppliers
   );
 
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
   const [deleteModal, setDeleteModal] = useState({
     open: false,
-    customerId: null,
-    customerName: "",
+    supplierId: null,
+    supplierName: "",
   });
 
   useEffect(() => {
-    dispatch(fetchCustomers());
+    dispatch(fetchSuppliers());
   }, [dispatch]);
 
   const rows = useMemo(() => {
     const term = search.trim().toLowerCase();
     if (!term) return items;
-    return items.filter((c) => {
-      const name = c.name || "";
-      const legalName = c.legal_name || "";
-      const email = c.email || "";
-      const phone = c.phone || "";
-      const taxId = c.tax_id || "";
-      const address = c.address || "";
+    return items.filter((s) => {
+      const fantasyName = s.fantasy_name || "";
+      const legalName = s.legal_name || "";
+      const email = s.email || "";
+      const phone = s.phone || "";
+      const taxId = s.tax_id || "";
+      const address = s.address || "";
       return (
-        name.toLowerCase().includes(term) ||
+        fantasyName.toLowerCase().includes(term) ||
         legalName.toLowerCase().includes(term) ||
         email.toLowerCase().includes(term) ||
         phone.toLowerCase().includes(term) ||
@@ -136,42 +136,42 @@ export default function CustomersPage() {
   }, [items, search]);
 
   const onCreate = async (payload) => {
-    await dispatch(createCustomer(payload)).unwrap();
+    await dispatch(createSupplier(payload)).unwrap();
     setOpen(false);
-    dispatch(fetchCustomers());
+    dispatch(fetchSuppliers());
   };
 
   const handleDelete = async () => {
-    if (deleteModal.customerId) {
-      await dispatch(deleteCustomer(deleteModal.customerId)).unwrap();
-      setDeleteModal({ open: false, customerId: null, customerName: "" });
+    if (deleteModal.supplierId) {
+      await dispatch(deleteSupplier(deleteModal.supplierId)).unwrap();
+      setDeleteModal({ open: false, supplierId: null, supplierName: "" });
     }
   };
 
   return (
     <div className="grid gap-3">
       <Toolbar>
-        <ToolbarTitle kicker="Directorio" title="Clientes" />
+        <ToolbarTitle kicker="Directorio" title="Proveedores" />
         <ToolbarActions>
           <SearchInput
-            placeholder="Buscar por nombre, razón social, email, teléfono..."
+            placeholder="Buscar por nombre de fantasía, razón social, email, teléfono..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
           <PrimaryButton onClick={() => setOpen(true)}>
-            Nuevo cliente
+            Nuevo proveedor
           </PrimaryButton>
         </ToolbarActions>
       </Toolbar>
 
-      {status === "loading" && <InfoAlert>Cargando clientes...</InfoAlert>}
+      {status === "loading" && <InfoAlert>Cargando proveedores...</InfoAlert>}
       {error && <ErrorAlert>{error}</ErrorAlert>}
 
       <Pagination data={rows}>
         {(paginatedRows) => (
           <Table>
             <TableHeader>
-              <TableHeaderCell>Nombre</TableHeaderCell>
+              <TableHeaderCell>Nombre de Fantasía</TableHeaderCell>
               <TableHeaderCell>Razón Social</TableHeaderCell>
               <TableHeaderCell>Email</TableHeaderCell>
               <TableHeaderCell>Teléfono</TableHeaderCell>
@@ -180,20 +180,20 @@ export default function CustomersPage() {
               <TableHeaderCell>Acciones</TableHeaderCell>
             </TableHeader>
             <TableBody>
-              {paginatedRows.map((c) => (
-                <TableRow key={c.id}>
-                  <TableCell>{c.name}</TableCell>
-                  <TableCell>{c.legal_name || "-"}</TableCell>
-                  <TableCell>{c.email || "-"}</TableCell>
-                  <TableCell>{c.phone || "-"}</TableCell>
-                  <TableCell>{c.tax_id || "-"}</TableCell>
-                  <TableCell>{c.address || "-"}</TableCell>
+              {paginatedRows.map((s) => (
+                <TableRow key={s.id}>
+                  <TableCell>{s.fantasy_name}</TableCell>
+                  <TableCell>{s.legal_name || "-"}</TableCell>
+                  <TableCell>{s.email || "-"}</TableCell>
+                  <TableCell>{s.phone || "-"}</TableCell>
+                  <TableCell>{s.tax_id || "-"}</TableCell>
+                  <TableCell>{s.address || "-"}</TableCell>
                   <TableCell>
                     <div className="flex gap-2">
                       <SecondaryButton
                         onClick={(e) => {
                           e.stopPropagation();
-                          navigate(`/app/customers/${c.id}/edit`);
+                          navigate(`/app/suppliers/${s.id}/edit`);
                         }}
                       >
                         Editar
@@ -203,8 +203,8 @@ export default function CustomersPage() {
                           e.stopPropagation();
                           setDeleteModal({
                             open: true,
-                            customerId: c.id,
-                            customerName: c.name,
+                            supplierId: s.id,
+                            supplierName: s.fantasy_name,
                           });
                         }}
                       >
@@ -216,7 +216,7 @@ export default function CustomersPage() {
               ))}
               {!rows.length && status === "succeeded" && (
                 <TableRow>
-                  <TableCell colSpan={7}>Todavía no hay clientes.</TableCell>
+                  <TableCell colSpan={7}>Todavía no hay proveedores.</TableCell>
                 </TableRow>
               )}
             </TableBody>
@@ -226,7 +226,7 @@ export default function CustomersPage() {
 
       {createError && <ErrorAlert>{createError}</ErrorAlert>}
 
-      <NewCustomerModal
+      <NewSupplierModal
         open={open}
         onClose={() => setOpen(false)}
         onSubmit={onCreate}
@@ -236,11 +236,11 @@ export default function CustomersPage() {
       <ConfirmModal
         open={deleteModal.open}
         onClose={() =>
-          setDeleteModal({ open: false, customerId: null, customerName: "" })
+          setDeleteModal({ open: false, supplierId: null, supplierName: "" })
         }
         onConfirm={handleDelete}
-        title="Eliminar cliente"
-        message={`¿Estás seguro de que deseas eliminar el cliente "${deleteModal.customerName}"? Esta acción no se puede deshacer.`}
+        title="Eliminar proveedor"
+        message={`¿Estás seguro de que deseas eliminar el proveedor "${deleteModal.supplierName}"? Esta acción no se puede deshacer.`}
         confirmText="Eliminar"
         cancelText="Cancelar"
         confirmVariant="danger"
@@ -248,3 +248,4 @@ export default function CustomersPage() {
     </div>
   );
 }
+

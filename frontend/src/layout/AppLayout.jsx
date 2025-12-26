@@ -114,6 +114,24 @@ export default function AppLayout({ children }) {
             <span className="w-6 inline-flex justify-center">👤</span>
             {!collapsed && <span>Clientes</span>}
           </NavLink>
+
+          <NavLink
+            to="/app/suppliers"
+            className={({ isActive }) =>
+              [
+                "flex items-center text-sm gap-2 w-full px-3 py-2.5 rounded-xl border cursor-pointer no-underline",
+                "border-white/10 bg-white/[0.03] hover:bg-white/[0.06]",
+                isActive
+                  ? "border-[rgba(120,160,255,0.6)] bg-[rgba(120,160,255,0.12)]"
+                  : "",
+              ]
+                .filter(Boolean)
+                .join(" ")
+            }
+          >
+            <span className="w-6 inline-flex justify-center">🏭</span>
+            {!collapsed && <span>Proveedores</span>}
+          </NavLink>
         </nav>
 
         <div className="mt-auto flex flex-col gap-2 items-end">

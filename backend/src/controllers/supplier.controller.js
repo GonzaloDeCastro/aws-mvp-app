@@ -1,13 +1,13 @@
-import { CustomerModel } from "../models/customer.model.js";
+import { SupplierModel } from "../models/supplier.model.js";
 import { HttpError } from "../utils/httpError.js";
 
-export const CustomerController = {
+export const SupplierController = {
   async list(req, res, next) {
     try {
       const companyId = Number(req.user?.companyId);
       if (!companyId) throw new HttpError(401, "Unauthorized");
 
-      const rows = await CustomerModel.listByCompany(companyId);
+      const rows = await SupplierModel.listByCompany(companyId);
       res.json({ ok: true, data: rows });
     } catch (e) {
       next(e);
@@ -19,11 +19,11 @@ export const CustomerController = {
       const companyId = Number(req.user?.companyId);
       if (!companyId) throw new HttpError(401, "Unauthorized");
 
-      const customerId = Number(req.params.id);
-      if (!customerId) throw new HttpError(400, "Invalid customer id");
+      const supplierId = Number(req.params.id);
+      if (!supplierId) throw new HttpError(400, "Invalid supplier id");
 
-      const row = await CustomerModel.getById({ companyId, customerId });
-      if (!row) throw new HttpError(404, "Customer not found");
+      const row = await SupplierModel.getById({ companyId, supplierId });
+      if (!row) throw new HttpError(404, "Supplier not found");
 
       res.json({ ok: true, data: row });
     } catch (e) {
@@ -37,7 +37,7 @@ export const CustomerController = {
       if (!companyId) throw new HttpError(401, "Unauthorized");
 
       const {
-        name,
+        fantasyName,
         legalName = null,
         email = null,
         phone = null,
@@ -45,11 +45,11 @@ export const CustomerController = {
         address = null,
       } = req.body;
 
-      if (!name) throw new HttpError(400, "name is required");
+      if (!fantasyName) throw new HttpError(400, "fantasyName is required");
 
-      const id = await CustomerModel.create({
+      const id = await SupplierModel.create({
         companyId,
-        name,
+        fantasyName,
         legalName,
         email,
         phone,
@@ -68,11 +68,11 @@ export const CustomerController = {
       const companyId = Number(req.user?.companyId);
       if (!companyId) throw new HttpError(401, "Unauthorized");
 
-      const customerId = Number(req.params.id);
-      if (!customerId) throw new HttpError(400, "Invalid customer id");
+      const supplierId = Number(req.params.id);
+      if (!supplierId) throw new HttpError(400, "Invalid supplier id");
 
       const {
-        name,
+        fantasyName,
         legalName = null,
         email = null,
         phone = null,
@@ -80,12 +80,12 @@ export const CustomerController = {
         address = null,
       } = req.body;
 
-      if (!name) throw new HttpError(400, "name is required");
+      if (!fantasyName) throw new HttpError(400, "fantasyName is required");
 
-      const affected = await CustomerModel.update({
+      const affected = await SupplierModel.update({
         companyId,
-        customerId,
-        name,
+        supplierId,
+        fantasyName,
         legalName,
         email,
         phone,
@@ -93,7 +93,7 @@ export const CustomerController = {
         address,
       });
 
-      if (!affected) throw new HttpError(404, "Customer not found");
+      if (!affected) throw new HttpError(404, "Supplier not found");
 
       res.json({ ok: true });
     } catch (e) {
@@ -106,11 +106,11 @@ export const CustomerController = {
       const companyId = Number(req.user?.companyId);
       if (!companyId) throw new HttpError(401, "Unauthorized");
 
-      const customerId = Number(req.params.id);
-      if (!customerId) throw new HttpError(400, "Invalid customer id");
+      const supplierId = Number(req.params.id);
+      if (!supplierId) throw new HttpError(400, "Invalid supplier id");
 
-      const affected = await CustomerModel.remove({ companyId, customerId });
-      if (!affected) throw new HttpError(404, "Customer not found");
+      const affected = await SupplierModel.remove({ companyId, supplierId });
+      if (!affected) throw new HttpError(404, "Supplier not found");
 
       res.json({ ok: true });
     } catch (e) {
@@ -118,3 +118,4 @@ export const CustomerController = {
     }
   },
 };
+

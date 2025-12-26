@@ -4,7 +4,7 @@ export const CustomerModel = {
   async listByCompany(companyId) {
     const [rows] = await pool.execute(
       `
-      SELECT id, company_id, name, email, phone, tax_id, address, created_at
+      SELECT id, company_id, name, legal_name, email, phone, tax_id, address, created_at
       FROM customers
       WHERE company_id = ?
       ORDER BY id DESC
@@ -17,7 +17,7 @@ export const CustomerModel = {
   async getById({ companyId, customerId }) {
     const [rows] = await pool.execute(
       `
-      SELECT id, company_id, name, email, phone, tax_id, address, created_at
+      SELECT id, company_id, name, legal_name, email, phone, tax_id, address, created_at
       FROM customers
       WHERE company_id = ? AND id = ?
       LIMIT 1
@@ -27,25 +27,25 @@ export const CustomerModel = {
     return rows[0] || null;
   },
 
-  async create({ companyId, name, email, phone, taxId, address }) {
+  async create({ companyId, name, legalName, email, phone, taxId, address }) {
     const [result] = await pool.execute(
       `
-      INSERT INTO customers (company_id, name, email, phone, tax_id, address)
-      VALUES (?, ?, ?, ?, ?, ?)
+      INSERT INTO customers (company_id, name, legal_name, email, phone, tax_id, address)
+      VALUES (?, ?, ?, ?, ?, ?, ?)
       `,
-      [companyId, name, email, phone, taxId, address]
+      [companyId, name, legalName, email, phone, taxId, address]
     );
     return result.insertId;
   },
 
-  async update({ companyId, customerId, name, email, phone, taxId, address }) {
+  async update({ companyId, customerId, name, legalName, email, phone, taxId, address }) {
     const [result] = await pool.execute(
       `
       UPDATE customers
-      SET name = ?, email = ?, phone = ?, tax_id = ?, address = ?
+      SET name = ?, legal_name = ?, email = ?, phone = ?, tax_id = ?, address = ?
       WHERE company_id = ? AND id = ?
       `,
-      [name, email, phone, taxId, address, companyId, customerId]
+      [name, legalName, email, phone, taxId, address, companyId, customerId]
     );
     return result.affectedRows;
   },

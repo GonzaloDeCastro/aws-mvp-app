@@ -1,14 +1,14 @@
 import { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
-import { createCustomer, resetCreateStatus } from "../redux/customersSlice";
+import { createSupplier, resetCreateStatus } from "../redux/suppliersSlice";
 import Card from "../components/ui/Card";
-import { PrimaryButton } from "../components/ui/Button";
+import { PrimaryButton, SecondaryButton } from "../components/ui/Button";
 import Input from "../components/ui/Input";
 import Label from "../components/ui/Label";
 import { ErrorAlert } from "../components/ui/Alert";
 
-export default function CustomerCreatePage() {
+export default function SupplierCreatePage() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
@@ -17,10 +17,10 @@ export default function CustomerCreatePage() {
     dispatch(resetCreateStatus());
   }, [dispatch]);
 
-  const { createStatus, createError } = useSelector((s) => s.customers);
+  const { createStatus, createError } = useSelector((s) => s.suppliers);
 
   const [form, setForm] = useState({
-    name: "",
+    fantasyName: "",
     legalName: "",
     email: "",
     phone: "",
@@ -34,22 +34,22 @@ export default function CustomerCreatePage() {
   };
 
   const onCreate = async () => {
-      await dispatch(
-        createCustomer({
-          name: form.name.trim(),
-          legalName: form.legalName.trim() || null,
-          email: form.email || null,
-          phone: form.phone || null,
-          taxId: form.taxId || null,
-          address: form.address || null,
-        })
-      ).unwrap();
+    await dispatch(
+      createSupplier({
+        fantasyName: form.fantasyName.trim(),
+        legalName: form.legalName.trim() || null,
+        email: form.email || null,
+        phone: form.phone || null,
+        taxId: form.taxId || null,
+        address: form.address || null,
+      })
+    ).unwrap();
 
-    navigate("/app/customers");
+    navigate("/app/suppliers");
   };
 
   const disabled =
-    !form.name.trim() ||
+    !form.fantasyName.trim() ||
     createStatus === "loading" ||
     createStatus === "succeeded";
 
@@ -58,20 +58,25 @@ export default function CustomerCreatePage() {
       <Card>
         <div className="flex justify-between items-center mb-3">
           <div>
-            <div className="text-[11px] opacity-70">Clientes</div>
-            <h2 className="m-0 text-lg">Nuevo cliente</h2>
+            <div className="text-[11px] opacity-70">Proveedores</div>
+            <h2 className="m-0 text-lg">Nuevo proveedor</h2>
           </div>
-          <PrimaryButton onClick={onCreate} disabled={disabled}>
-            {createStatus === "loading" ? "Creando..." : "Crear"}
-          </PrimaryButton>
+          <div className="flex gap-2">
+            <SecondaryButton onClick={() => navigate("/app/suppliers")}>
+              Cancelar
+            </SecondaryButton>
+            <PrimaryButton onClick={onCreate} disabled={disabled}>
+              {createStatus === "loading" ? "Creando..." : "Crear"}
+            </PrimaryButton>
+          </div>
         </div>
 
         <div className="grid gap-2">
-          <Label>Nombre *</Label>
+          <Label>Nombre de Fantasía *</Label>
           <Input
-            value={form.name}
-            onChange={set("name")}
-            placeholder="Nombre del cliente"
+            value={form.fantasyName}
+            onChange={set("fantasyName")}
+            placeholder="Nombre de fantasía del proveedor"
           />
 
           <Label>Razón Social</Label>
@@ -117,3 +122,4 @@ export default function CustomerCreatePage() {
     </div>
   );
 }
+

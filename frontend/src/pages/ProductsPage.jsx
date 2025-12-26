@@ -58,10 +58,12 @@ export default function ProductsPage() {
         const sku = p.sku || "";
         const name = p.name || "";
         const brand = p.brand || "";
+        const supplier = p.supplier || "";
         return (
           sku.toLowerCase().includes(term) ||
           name.toLowerCase().includes(term) ||
-          brand.toLowerCase().includes(term)
+          brand.toLowerCase().includes(term) ||
+          supplier.toLowerCase().includes(term)
         );
       });
     }
@@ -90,7 +92,7 @@ export default function ProductsPage() {
             <option value="individual">Productos individuales</option>
           </Select>
           <SearchInput
-            placeholder="Buscar por nombre, SKU o marca..."
+            placeholder="Buscar por nombre, SKU, marca o proveedor..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
@@ -110,6 +112,7 @@ export default function ProductsPage() {
               <TableHeaderCell>SKU</TableHeaderCell>
               <TableHeaderCell>Nombre</TableHeaderCell>
               <TableHeaderCell>Marca</TableHeaderCell>
+              <TableHeaderCell>Proveedor</TableHeaderCell>
               <TableHeaderCell>Stock</TableHeaderCell>
               <TableHeaderCell>Precio</TableHeaderCell>
               <TableHeaderCell>Moneda</TableHeaderCell>
@@ -122,6 +125,7 @@ export default function ProductsPage() {
                   <TableCell>{p.sku || "-"}</TableCell>
                   <TableCell>{p.name}</TableCell>
                   <TableCell>{p.brand || "-"}</TableCell>
+                  <TableCell>{p.supplier || "-"}</TableCell>
                   <TableCell>{p.stock_qty}</TableCell>
                   <TableCell>
                     {new Intl.NumberFormat("es-ES", {
@@ -163,7 +167,7 @@ export default function ProductsPage() {
               ))}
               {!filteredItems.length && status === "succeeded" && (
                 <TableRow>
-                  <TableCell colSpan={8}>No hay productos aún.</TableCell>
+                  <TableCell colSpan={9}>No hay productos aún.</TableCell>
                 </TableRow>
               )}
             </TableBody>

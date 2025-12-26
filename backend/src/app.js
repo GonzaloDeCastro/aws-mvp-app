@@ -8,6 +8,7 @@ import authRoutes from "./routes/auth.routes.js";
 import productRoutes from "./routes/product.routes.js";
 import quoteRoutes from "./routes/quote.routes.js";
 import customerRoutes from "./routes/customer.routes.js";
+import supplierRoutes from "./routes/supplier.routes.js";
 import companyRoutes from "./routes/company.routes.js";
 import categoryRoutes from "./routes/category.routes.js";
 import taxRoutes from "./routes/tax.routes.js";
@@ -27,6 +28,7 @@ export const createApp = () => {
   app.use("/api/products", authMiddleware, productRoutes);
   app.use("/api/quotes", authMiddleware, quoteRoutes);
   app.use("/api/customers", authMiddleware, customerRoutes);
+  app.use("/api/suppliers", authMiddleware, supplierRoutes);
   app.use("/api/company", companyRoutes);
   app.use("/api/categories", authMiddleware, categoryRoutes);
   app.use("/api/taxes", authMiddleware, taxRoutes);

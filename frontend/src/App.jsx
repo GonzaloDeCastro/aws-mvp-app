@@ -16,6 +16,9 @@ import NotFoundPage from "./pages/NotFoundPage";
 import CustomersPage from "./pages/CustomersPage";
 import CustomerCreatePage from "./pages/CustomerCreatePage";
 import CustomerEditPage from "./pages/CustomerEditPage";
+import SuppliersPage from "./pages/SuppliersPage";
+import SupplierCreatePage from "./pages/SupplierCreatePage";
+import SupplierEditPage from "./pages/SupplierEditPage";
 import QuoteCreatePage from "./pages/QuoteCreatePage";
 import QuoteEditPage from "./pages/QuoteEditPage";
 import CompanyPage from "./pages/CompanyPage";
@@ -42,6 +45,9 @@ export default function App() {
           <Route path="customers" element={<CustomersPage />} />
           <Route path="customers/new" element={<CustomerCreatePage />} />
           <Route path="customers/:id/edit" element={<CustomerEditPage />} />
+          <Route path="suppliers" element={<SuppliersPage />} />
+          <Route path="suppliers/new" element={<SupplierCreatePage />} />
+          <Route path="suppliers/:id/edit" element={<SupplierEditPage />} />
           <Route path="company" element={<CompanyPage />} />
         </Route>
       </Route>

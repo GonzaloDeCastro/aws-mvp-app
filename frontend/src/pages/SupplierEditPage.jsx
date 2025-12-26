@@ -2,35 +2,35 @@ import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate, useParams } from "react-router-dom";
 import {
-  fetchCustomerById,
-  updateCustomer,
+  fetchSupplierById,
+  updateSupplier,
   resetCreateStatus,
-} from "../redux/customersSlice";
+} from "../redux/suppliersSlice";
 import Card from "../components/ui/Card";
-import { PrimaryButton } from "../components/ui/Button";
+import { PrimaryButton, SecondaryButton } from "../components/ui/Button";
 import Input from "../components/ui/Input";
 import Label from "../components/ui/Label";
 import { ErrorAlert } from "../components/ui/Alert";
 
-export default function CustomerEditPage() {
+export default function SupplierEditPage() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const { id } = useParams();
-  const customerId = Number(id);
+  const supplierId = Number(id);
 
   // Resetear el estado cuando se monta el componente
   useEffect(() => {
     dispatch(resetCreateStatus());
   }, [dispatch]);
 
-  const customer = useSelector((s) =>
-    s.customers.items.find((c) => c.id === customerId)
+  const supplier = useSelector((s) =>
+    s.suppliers.items.find((s) => s.id === supplierId)
   );
-  const { createStatus, createError } = useSelector((s) => s.customers);
+  const { createStatus, createError } = useSelector((s) => s.suppliers);
   const updateStatus = createStatus; // Reutilizar createStatus para update
 
   const [form, setForm] = useState({
-    name: "",
+    fantasyName: "",
     legalName: "",
     email: "",
     phone: "",
@@ -39,19 +39,19 @@ export default function CustomerEditPage() {
   });
 
   useEffect(() => {
-    if (customer) {
+    if (supplier) {
       setForm({
-        name: customer.name || "",
-        legalName: customer.legal_name || "",
-        email: customer.email || "",
-        phone: customer.phone || "",
-        taxId: customer.tax_id || "",
-        address: customer.address || "",
+        fantasyName: supplier.fantasy_name || "",
+        legalName: supplier.legal_name || "",
+        email: supplier.email || "",
+        phone: supplier.phone || "",
+        taxId: supplier.tax_id || "",
+        address: supplier.address || "",
       });
     } else {
-      dispatch(fetchCustomerById(customerId));
+      dispatch(fetchSupplierById(supplierId));
     }
-  }, [customer, customerId, dispatch]);
+  }, [supplier, supplierId, dispatch]);
 
   const set = (k) => (e) => {
     const value = e.target.value;
@@ -59,28 +59,28 @@ export default function CustomerEditPage() {
   };
 
   const onUpdate = async () => {
-      await dispatch(
-        updateCustomer({
-          id: customerId,
-          name: form.name.trim(),
-          legalName: form.legalName.trim() || null,
-          email: form.email || null,
-          phone: form.phone || null,
-          taxId: form.taxId || null,
-          address: form.address || null,
-        })
-      ).unwrap();
+    await dispatch(
+      updateSupplier({
+        id: supplierId,
+        fantasyName: form.fantasyName.trim(),
+        legalName: form.legalName.trim() || null,
+        email: form.email || null,
+        phone: form.phone || null,
+        taxId: form.taxId || null,
+        address: form.address || null,
+      })
+    ).unwrap();
 
-    navigate("/app/customers");
+    navigate("/app/suppliers");
   };
 
   const disabled =
-    !form.name.trim() ||
+    !form.fantasyName.trim() ||
     updateStatus === "loading" ||
     updateStatus === "succeeded";
 
-  if (!customer && updateStatus !== "loading") {
-    return <div className="text-[#e8eefc]">Cargando cliente...</div>;
+  if (!supplier && updateStatus !== "loading") {
+    return <div className="text-[#e8eefc]">Cargando proveedor...</div>;
   }
 
   return (
@@ -88,20 +88,25 @@ export default function CustomerEditPage() {
       <Card>
         <div className="flex justify-between items-center mb-3">
           <div>
-            <div className="text-[11px] opacity-70">Clientes</div>
-            <h2 className="m-0 text-lg">Editar cliente</h2>
+            <div className="text-[11px] opacity-70">Proveedores</div>
+            <h2 className="m-0 text-lg">Editar proveedor</h2>
           </div>
-          <PrimaryButton onClick={onUpdate} disabled={disabled}>
-            {updateStatus === "loading" ? "Guardando..." : "Guardar"}
-          </PrimaryButton>
+          <div className="flex gap-2">
+            <SecondaryButton onClick={() => navigate("/app/suppliers")}>
+              Cancelar
+            </SecondaryButton>
+            <PrimaryButton onClick={onUpdate} disabled={disabled}>
+              {updateStatus === "loading" ? "Guardando..." : "Guardar"}
+            </PrimaryButton>
+          </div>
         </div>
 
         <div className="grid gap-2">
-          <Label>Nombre *</Label>
+          <Label>Nombre de Fantasía *</Label>
           <Input
-            value={form.name}
-            onChange={set("name")}
-            placeholder="Nombre del cliente"
+            value={form.fantasyName}
+            onChange={set("fantasyName")}
+            placeholder="Nombre de fantasía del proveedor"
           />
 
           <Label>Razón Social</Label>
@@ -147,3 +152,4 @@ export default function CustomerEditPage() {
     </div>
   );
 }
+
