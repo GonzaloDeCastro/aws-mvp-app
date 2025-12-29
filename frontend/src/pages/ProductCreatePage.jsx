@@ -60,6 +60,9 @@ export default function ProductCreatePage() {
     components: [],
   });
 
+  // Estado local para el precio mientras se escribe (permite borrar dígito por dígito)
+  const [priceInput, setPriceInput] = useState("");
+
   const [newComponent, setNewComponent] = useState({ id: "", qty: 1 });
   const [showCategoryModal, setShowCategoryModal] = useState(false);
   const [newCategoryName, setNewCategoryName] = useState("");
@@ -79,8 +82,8 @@ export default function ProductCreatePage() {
 
   const set = (k) => (e) => {
     let value = e.target.value;
-    // Para campos numéricos de precio, limitar a 2 decimales
-    if (k === "price" && value !== "") {
+    // Para el campo de precio, manejamos el input de texto por separado
+    if (k === "price") {
       // Permitir solo números y un punto decimal
       value = value.replace(/[^\d.]/g, "");
       // Limitar a un solo punto
@@ -92,8 +95,16 @@ export default function ProductCreatePage() {
       if (parts.length === 2 && parts[1].length > 2) {
         value = parts[0] + "." + parts[1].substring(0, 2);
       }
+      // Actualizar el estado del input (string)
+      setPriceInput(value);
+      // También actualizar el form con el valor numérico si es válido
+      const numValue = value === "" || value === "." ? 0 : Number(value);
+      if (!isNaN(numValue)) {
+        setForm((v) => ({ ...v, [k]: numValue }));
+      }
+    } else {
+      setForm((v) => ({ ...v, [k]: value }));
     }
-    setForm((v) => ({ ...v, [k]: value }));
     // Limpiar error del campo cuando el usuario empieza a escribir
     if (errors[k]) {
       setErrors((e) => ({ ...e, [k]: undefined }));
@@ -208,8 +219,10 @@ export default function ProductCreatePage() {
           ...v,
           price: newPrice,
         }));
+        setPriceInput(newPrice.toFixed(2));
       }
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [componentsKey, hasComponents, products.length, dollarRate]); // Cuando cambian componentes
 
   const validateForm = () => {
@@ -259,7 +272,7 @@ export default function ProductCreatePage() {
       ).unwrap();
 
       navigate("/app/products");
-    } catch (error) {
+    } catch {
       // El error se maneja en createError del estado
     }
   };
@@ -399,27 +412,39 @@ export default function ProductCreatePage() {
               Precio {hasComponents && "(se calcula automáticamente)"} *
             </Label>
             <Input
-              type="number"
-              min="0"
-              step="0.01"
-              value={
-                hasComponents
-                  ? calculatedPrice.toFixed(2)
-                  : form.price === "" || form.price === undefined
-                  ? ""
-                  : Number(form.price).toFixed(2)
-              }
+              type="text"
+              value={hasComponents ? calculatedPrice.toFixed(2) : priceInput}
               onChange={set("price")}
               disabled={hasComponents}
-              placeholder={hasComponents ? "Se calcula desde componentes" : ""}
+              placeholder={
+                hasComponents ? "Se calcula desde componentes" : "0.00"
+              }
               readOnly={hasComponents}
               className={errors.price ? "border-red-500/50" : ""}
               onBlur={(e) => {
-                // Al perder el foco, asegurar que tenga máximo 2 decimales
+                // Al perder el foco, formatear con 2 decimales
                 if (e.target.value && !hasComponents) {
                   const num = Number(e.target.value);
+                  if (!isNaN(num) && num >= 0) {
+                    const formatted = num.toFixed(2);
+                    setPriceInput(formatted);
+                    setForm((v) => ({ ...v, price: num }));
+                  } else if (e.target.value === "" || e.target.value === ".") {
+                    setPriceInput("");
+                    setForm((v) => ({ ...v, price: 0 }));
+                  }
+                }
+              }}
+              onFocus={(e) => {
+                // Al enfocar, si el valor está formateado, permitir edición libre
+                if (!hasComponents && e.target.value) {
+                  const num = Number(e.target.value);
                   if (!isNaN(num)) {
-                    setForm((v) => ({ ...v, price: num.toFixed(2) }));
+                    // Si termina en .00, remover los ceros para facilitar la edición
+                    const str = e.target.value;
+                    if (str.endsWith(".00") || str.endsWith(",00")) {
+                      setPriceInput(str.replace(/\.?0+$/, ""));
+                    }
                   }
                 }
               }}
