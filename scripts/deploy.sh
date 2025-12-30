@@ -29,23 +29,37 @@ docker compose down 2>/dev/null || true
 
 # Limpiar espacio ANTES del build (crítico para VPS con espacio limitado)
 echo "🧹 Limpiando espacio de Docker ANTES del build..."
-echo "  - Limpiando contenedores detenidos..."
-docker container prune -f 2>/dev/null || true
-echo "  - Limpiando imágenes no utilizadas..."
+
+# Detener todos los contenedores
+docker stop $(docker ps -q) 2>/dev/null || true
+
+# Eliminar todos los contenedores
+docker container rm -f $(docker container ls -aq) 2>/dev/null || true
+
+# Eliminar todas las imágenes (se descargarán de nuevo durante el build)
+echo "  - Eliminando todas las imágenes..."
 docker image prune -a -f 2>/dev/null || true
-echo "  - Limpiando build cache..."
-docker builder prune -f 2>/dev/null || true
-echo "  - Limpiando volúmenes no utilizados..."
+
+# Limpiar build cache completamente
+echo "  - Eliminando build cache..."
+docker builder prune -a -f 2>/dev/null || true
+
+# Limpiar volúmenes huérfanos (preserva volúmenes con nombre)
+echo "  - Limpiando volúmenes huérfanos..."
 docker volume prune -f 2>/dev/null || true
-echo "  - Limpieza general del sistema..."
-docker system prune -f 2>/dev/null || true
+
+# Limpieza completa del sistema
+echo "  - Limpieza completa del sistema..."
+docker system prune -a -f 2>/dev/null || true
 
 # Verificar espacio disponible después de limpiar
 echo "💾 Espacio disponible después de limpiar:"
 df -h / | tail -1
 
-# Construir y levantar servicios
+# Construir y levantar servicios (usar BuildKit si está disponible)
 echo "🔨 Construyendo y levantando..."
+export DOCKER_BUILDKIT=1
+export COMPOSE_DOCKER_CLI_BUILD=1
 docker compose up -d --build
 
 # Limpiar imágenes huérfanas después del build

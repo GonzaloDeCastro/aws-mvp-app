@@ -1,4 +1,5 @@
 # Frontend Dockerfile (Multi-stage build)
+# syntax=docker/dockerfile:1.4
 # Stage 1: Build
 FROM node:20-alpine AS builder
 
@@ -8,8 +9,11 @@ WORKDIR /app
 COPY package*.json ./
 
 # Instalar todas las dependencias (incluyendo devDependencies para build)
-RUN npm ci --no-audit --no-fund && \
-    npm cache clean --force
+# Usar cache mount para reducir espacio en disco (requiere BuildKit)
+# Si BuildKit no está disponible, Docker ignorará --mount y usará método estándar
+RUN --mount=type=cache,target=/root/.npm \
+    npm ci --no-audit --no-fund && \
+    rm -rf /tmp/* /var/tmp/*
 
 # Copiar código fuente
 COPY . .
@@ -21,7 +25,7 @@ ENV VITE_API_BASE_URL=$VITE_API_BASE_URL
 # Construir aplicación
 RUN npm run build && \
     rm -rf node_modules && \
-    npm cache clean --force
+    rm -rf /tmp/* /var/tmp/*
 
 # Stage 2: Production
 FROM nginx:alpine

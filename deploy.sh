@@ -46,18 +46,37 @@ docker compose down 2>/dev/null || true
 
 # Limpiar espacio ANTES del build (crítico para VPS con espacio limitado)
 echo -e "${YELLOW}🧹 Limpiando espacio de Docker ANTES del build...${NC}"
-docker container prune -f 2>/dev/null || true
+
+# Detener todos los contenedores
+docker stop $(docker ps -q) 2>/dev/null || true
+
+# Eliminar todos los contenedores
+docker container rm -f $(docker container ls -aq) 2>/dev/null || true
+
+# Eliminar todas las imágenes (se descargarán de nuevo durante el build)
+echo "  - Eliminando todas las imágenes..."
 docker image prune -a -f 2>/dev/null || true
-docker builder prune -f 2>/dev/null || true
+
+# Limpiar build cache completamente
+echo "  - Eliminando build cache..."
+docker builder prune -a -f 2>/dev/null || true
+
+# Limpiar volúmenes huérfanos (preserva volúmenes con nombre)
+echo "  - Limpiando volúmenes huérfanos..."
 docker volume prune -f 2>/dev/null || true
-docker system prune -f 2>/dev/null || true
+
+# Limpieza completa del sistema
+echo "  - Limpieza completa del sistema..."
+docker system prune -a -f 2>/dev/null || true
 
 # Verificar espacio después de limpiar
 echo -e "${YELLOW}💾 Espacio disponible después de limpiar:${NC}"
 df -h / | tail -1
 
-# Construir y levantar
+# Construir y levantar (usar BuildKit si está disponible para cache mounts)
 echo -e "${YELLOW}🔨 Construyendo y levantando...${NC}"
+export DOCKER_BUILDKIT=1
+export COMPOSE_DOCKER_CLI_BUILD=1
 docker compose up -d --build --remove-orphans
 
 # Limpiar después del build
