@@ -8,7 +8,8 @@ WORKDIR /app
 COPY package*.json ./
 
 # Instalar todas las dependencias (incluyendo devDependencies para build)
-RUN npm ci
+RUN npm ci --no-audit --no-fund && \
+    npm cache clean --force
 
 # Copiar código fuente
 COPY . .
@@ -18,7 +19,9 @@ ARG VITE_API_BASE_URL
 ENV VITE_API_BASE_URL=$VITE_API_BASE_URL
 
 # Construir aplicación
-RUN npm run build
+RUN npm run build && \
+    rm -rf node_modules && \
+    npm cache clean --force
 
 # Stage 2: Production
 FROM nginx:alpine

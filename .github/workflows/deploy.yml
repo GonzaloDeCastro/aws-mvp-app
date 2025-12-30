@@ -37,7 +37,7 @@ jobs:
             # Crear directorio si no existe
             mkdir -p ~/aws-mvp-app
             cd ~/aws-mvp-app
-            
+
             # Asegurar que estamos en la rama correcta
             if [ -d ".git" ]; then
               git fetch origin
