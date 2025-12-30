@@ -36,14 +36,33 @@ else
     echo -e "${GREEN}✅ .env ya existe${NC}"
 fi
 
+# Verificar espacio disponible
+echo -e "${YELLOW}💾 Espacio disponible antes de iniciar:${NC}"
+df -h / | tail -1
+
 # Detener contenedores viejos
 echo -e "${YELLOW}🛑 Deteniendo contenedores...${NC}"
 docker compose down 2>/dev/null || true
 
+# Limpiar espacio ANTES del build (crítico para VPS con espacio limitado)
+echo -e "${YELLOW}🧹 Limpiando espacio de Docker ANTES del build...${NC}"
+docker container prune -f 2>/dev/null || true
+docker image prune -a -f 2>/dev/null || true
+docker builder prune -f 2>/dev/null || true
+docker volume prune -f 2>/dev/null || true
+docker system prune -f 2>/dev/null || true
+
+# Verificar espacio después de limpiar
+echo -e "${YELLOW}💾 Espacio disponible después de limpiar:${NC}"
+df -h / | tail -1
+
 # Construir y levantar
 echo -e "${YELLOW}🔨 Construyendo y levantando...${NC}"
 docker compose up -d --build --remove-orphans
-docker system prune -f 
+
+# Limpiar después del build
+echo -e "${YELLOW}🧹 Limpiando imágenes huérfanas después del build...${NC}"
+docker image prune -f 2>/dev/null || true 
 
 echo -e "${YELLOW}⏳ Esperando servicios...${NC}"
 sleep 10

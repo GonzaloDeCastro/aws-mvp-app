@@ -10,6 +10,10 @@ echo "🚀 Iniciando despliegue..."
 # Ir al directorio del proyecto
 cd ~/aws-mvp-app || { echo "❌ Error: Directorio ~/aws-mvp-app no encontrado"; exit 1; }
 
+# Verificar espacio disponible ANTES de empezar
+echo "💾 Espacio disponible antes de iniciar:"
+df -h / | tail -1
+
 # Pull de cambios (si usas git en EC2)
 if [ -d .git ]; then
   echo "📥 Actualizando código desde Git..."
@@ -21,15 +25,32 @@ export VITE_API_BASE_URL=${VITE_API_BASE_URL:-http://localhost:3001}
 
 # Detener contenedores existentes
 echo "🛑 Deteniendo contenedores..."
-docker-compose down || true
+docker compose down 2>/dev/null || true
+
+# Limpiar espacio ANTES del build (crítico para VPS con espacio limitado)
+echo "🧹 Limpiando espacio de Docker ANTES del build..."
+echo "  - Limpiando contenedores detenidos..."
+docker container prune -f 2>/dev/null || true
+echo "  - Limpiando imágenes no utilizadas..."
+docker image prune -a -f 2>/dev/null || true
+echo "  - Limpiando build cache..."
+docker builder prune -f 2>/dev/null || true
+echo "  - Limpiando volúmenes no utilizados..."
+docker volume prune -f 2>/dev/null || true
+echo "  - Limpieza general del sistema..."
+docker system prune -f 2>/dev/null || true
+
+# Verificar espacio disponible después de limpiar
+echo "💾 Espacio disponible después de limpiar:"
+df -h / | tail -1
 
 # Construir y levantar servicios
 echo "🔨 Construyendo y levantando..."
-docker-compose up -d --build
+docker compose up -d --build
 
-# Limpiar imágenes antiguas
-echo "🧹 Limpiando imágenes antiguas..."
-docker image prune -f
+# Limpiar imágenes huérfanas después del build
+echo "🧹 Limpiando imágenes huérfanas después del build..."
+docker image prune -f 2>/dev/null || true
 
 # Esperar a que los servicios inicien
 echo "⏳ Esperando a que los servicios inicien..."
@@ -37,7 +58,7 @@ sleep 10
 
 # Verificar estado
 echo "📊 Estado de los servicios:"
-docker-compose ps
+docker compose ps
 
 # Health check
 echo "🏥 Verificando health check..."
