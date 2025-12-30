@@ -160,4 +160,48 @@ export const CompanyController = {
       next(e);
     }
   },
+
+  async update(req, res, next) {
+    try {
+      const companyId = Number(req.user?.companyId);
+      if (!companyId) throw new HttpError(401, "Unauthorized");
+
+      const {
+        name,
+        legalName = null,
+        taxId = null,
+        email = null,
+        phone = null,
+        address = null,
+      } = req.body;
+
+      if (!name) {
+        throw new HttpError(400, "name is required");
+      }
+
+      const affected = await CompanyModel.update({
+        companyId,
+        name,
+        legalName,
+        taxId,
+        email,
+        phone,
+        address,
+      });
+
+      if (!affected) throw new HttpError(404, "Company not found");
+
+      // Obtener la compañía actualizada
+      const updatedCompany = await CompanyModel.getById(companyId);
+      if (!updatedCompany) throw new HttpError(404, "Company not found");
+
+      const { logo, ...rest } = updatedCompany;
+      const logoBase64 =
+        logo && Buffer.isBuffer(logo) ? logo.toString("base64") : null;
+
+      res.json({ ok: true, data: { ...rest, logo: logoBase64 } });
+    } catch (e) {
+      next(e);
+    }
+  },
 };

@@ -1,7 +1,11 @@
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { apiPost } from "../api";
-import { fetchCompany, updateDollarRate } from "../redux/companySlice";
+import {
+  fetchCompany,
+  updateDollarRate,
+  updateCompany,
+} from "../redux/companySlice";
 import Card from "../components/ui/Card";
 import { PrimaryButton } from "../components/ui/Button";
 import Input from "../components/ui/Input";
@@ -21,16 +25,38 @@ export default function CompanyPage() {
   const [savingDollarRate, setSavingDollarRate] = useState(false);
   const [dollarRateError, setDollarRateError] = useState("");
 
+  // Estados para edición de datos de compañía
+  const [form, setForm] = useState({
+    name: "",
+    legalName: "",
+    taxId: "",
+    email: "",
+    phone: "",
+    address: "",
+  });
+  const [savingCompany, setSavingCompany] = useState(false);
+  const [companyError, setCompanyError] = useState("");
+
   useEffect(() => {
     if (status === "idle") {
       dispatch(fetchCompany());
     }
   }, [dispatch, status]);
 
-  // Sincronizar dollarRate cuando se carga la compañía
+  // Sincronizar dollarRate y formulario cuando se carga la compañía
   useEffect(() => {
     if (company?.dollar_rate !== undefined) {
       setDollarRate(String(company.dollar_rate));
+    }
+    if (company) {
+      setForm({
+        name: company.name || "",
+        legalName: company.legal_name || "",
+        taxId: company.tax_id || "",
+        email: company.email || "",
+        phone: company.phone || "",
+        address: company.address || "",
+      });
     }
   }, [company]);
 
@@ -132,6 +158,32 @@ export default function CompanyPage() {
     }
   };
 
+  const onSaveCompany = async () => {
+    if (!form.name.trim()) {
+      setCompanyError("El nombre de la compañía es obligatorio");
+      return;
+    }
+
+    try {
+      setSavingCompany(true);
+      setCompanyError("");
+      await dispatch(
+        updateCompany({
+          name: form.name.trim(),
+          legalName: form.legalName.trim() || null,
+          taxId: form.taxId.trim() || null,
+          email: form.email.trim() || null,
+          phone: form.phone.trim() || null,
+          address: form.address.trim() || null,
+        })
+      ).unwrap();
+      setSavingCompany(false);
+    } catch (e) {
+      setSavingCompany(false);
+      setCompanyError(e.message || "Error al guardar los datos de la compañía");
+    }
+  };
+
   const effectiveLogo = preview
     ? preview
     : company?.logo
@@ -152,19 +204,96 @@ export default function CompanyPage() {
       <Card>
         <div className="grid grid-cols-1 gap-3 mb-3">
           <div>
-            <Label>Nombre</Label>
-            <div className="px-3 py-2.5 rounded-xl border border-white/12 bg-[rgba(0,0,0,0.22)] text-[#e8eefc] text-sm">
-              {company?.name || "-"}
-            </div>
+            <Label>Nombre de la compañía *</Label>
+            <Input
+              value={form.name}
+              onChange={(e) => {
+                setForm((f) => ({ ...f, name: e.target.value }));
+                setCompanyError("");
+              }}
+              placeholder="Nombre de la compañía"
+            />
+          </div>
+
+          <div>
+            <Label>Razón social</Label>
+            <Input
+              value={form.legalName}
+              onChange={(e) => {
+                setForm((f) => ({ ...f, legalName: e.target.value }));
+                setCompanyError("");
+              }}
+              placeholder="Razón social (opcional)"
+            />
+          </div>
+
+          <div>
+            <Label>CUIT/CUIL</Label>
+            <Input
+              value={form.taxId}
+              onChange={(e) => {
+                setForm((f) => ({ ...f, taxId: e.target.value }));
+                setCompanyError("");
+              }}
+              placeholder="30-12345678-9 (opcional)"
+            />
           </div>
 
           <div>
             <Label>Email</Label>
-            <div className="px-3 py-2.5 rounded-xl border border-white/12 bg-[rgba(0,0,0,0.22)] text-[#e8eefc] text-sm">
-              {company?.email || "-"}
-            </div>
+            <Input
+              type="email"
+              value={form.email}
+              onChange={(e) => {
+                setForm((f) => ({ ...f, email: e.target.value }));
+                setCompanyError("");
+              }}
+              placeholder="contacto@empresa.com (opcional)"
+            />
           </div>
 
+          <div>
+            <Label>Teléfono</Label>
+            <Input
+              value={form.phone}
+              onChange={(e) => {
+                setForm((f) => ({ ...f, phone: e.target.value }));
+                setCompanyError("");
+              }}
+              placeholder="+54 341 0000000 (opcional)"
+            />
+          </div>
+
+          <div>
+            <Label>Dirección</Label>
+            <Input
+              value={form.address}
+              onChange={(e) => {
+                setForm((f) => ({ ...f, address: e.target.value }));
+                setCompanyError("");
+              }}
+              placeholder="Dirección (opcional)"
+            />
+          </div>
+
+          {companyError && (
+            <ErrorAlert className="text-xs py-2">{companyError}</ErrorAlert>
+          )}
+
+          <div className="flex justify-end pt-2 border-t border-white/12">
+            <PrimaryButton
+              onClick={onSaveCompany}
+              disabled={savingCompany || !form.name.trim()}
+              className="cursor-pointer"
+            >
+              {savingCompany ? "Guardando..." : "Guardar datos de compañía"}
+            </PrimaryButton>
+          </div>
+        </div>
+      </Card>
+
+      <Card>
+        <div className="grid grid-cols-1 gap-3 mb-3">
           <div>
             <Label>Dólar Referencia (USD)</Label>
             <div className="flex gap-2 items-start">
@@ -183,6 +312,7 @@ export default function CompanyPage() {
               <PrimaryButton
                 onClick={onSaveDollarRate}
                 disabled={savingDollarRate || !dollarRate}
+                className="cursor-pointer"
               >
                 {savingDollarRate ? "Guardando..." : "Guardar"}
               </PrimaryButton>
@@ -221,7 +351,7 @@ export default function CompanyPage() {
               type="file"
               accept="image/*"
               onChange={onFileChange}
-              className="mt-1 text-xs"
+              className="mt-1 text-xs cursor-pointer"
             />
             {uploadError && (
               <ErrorAlert className="mt-2 text-xs py-2">
@@ -232,7 +362,11 @@ export default function CompanyPage() {
         </div>
 
         <div className="flex justify-end">
-          <PrimaryButton disabled={!base64 || uploading} onClick={onSave}>
+          <PrimaryButton
+            disabled={!base64 || uploading}
+            onClick={onSave}
+            className="cursor-pointer"
+          >
             {uploading ? "Guardando..." : "Guardar logo"}
           </PrimaryButton>
         </div>

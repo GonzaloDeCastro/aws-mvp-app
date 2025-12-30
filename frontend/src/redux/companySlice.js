@@ -17,6 +17,14 @@ export const updateDollarRate = createAsyncThunk(
   }
 );
 
+export const updateCompany = createAsyncThunk(
+  "company/updateCompany",
+  async (companyData) => {
+    const json = await apiPut("/company/update", companyData);
+    return json.data;
+  }
+);
+
 const companySlice = createSlice({
   name: "company",
   initialState: {
@@ -40,6 +48,9 @@ const companySlice = createSlice({
         state.error = action.error?.message || "Failed to load company";
       })
       .addCase(updateDollarRate.fulfilled, (state, action) => {
+        state.current = action.payload;
+      })
+      .addCase(updateCompany.fulfilled, (state, action) => {
         state.current = action.payload;
       });
   },

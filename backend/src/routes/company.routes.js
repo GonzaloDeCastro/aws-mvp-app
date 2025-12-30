@@ -11,5 +11,6 @@ router.post("/register", CompanyController.register);
 router.get("/me", authMiddleware, CompanyController.me);
 router.post("/logo", authMiddleware, CompanyController.uploadLogo);
 router.put("/dollar-rate", authMiddleware, CompanyController.updateDollarRate);
+router.put("/update", authMiddleware, CompanyController.update);
 
 export default router;

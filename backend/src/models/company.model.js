@@ -4,7 +4,7 @@ export const CompanyModel = {
   async getById(companyId) {
     const [rows] = await pool.execute(
       `
-      SELECT id, name, email, phone, address, logo, dollar_rate
+      SELECT id, name, legal_name, tax_id, email, phone, address, logo, dollar_rate
       FROM companies
       WHERE id = ?
       LIMIT 1
@@ -46,6 +46,18 @@ export const CompanyModel = {
     const [result] = await pool.execute(
       `UPDATE companies SET dollar_rate = ? WHERE id = ?`,
       [dollarRate, companyId]
+    );
+    return result.affectedRows;
+  },
+
+  async update({ companyId, name, legalName, taxId, email, phone, address }) {
+    const [result] = await pool.execute(
+      `
+      UPDATE companies
+      SET name = ?, legal_name = ?, tax_id = ?, email = ?, phone = ?, address = ?
+      WHERE id = ?
+      `,
+      [name, legalName || null, taxId || null, email || null, phone || null, address || null, companyId]
     );
     return result.affectedRows;
   },
