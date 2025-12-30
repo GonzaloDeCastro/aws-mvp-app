@@ -21,23 +21,16 @@ ENV VITE_API_BASE_URL=$VITE_API_BASE_URL
 RUN npm run build
 
 # Stage 2: Production
-FROM node:20-alpine
-
-WORKDIR /app
-
-# Instalar serve y wget para healthcheck
-RUN npm install -g serve && \
-    apk add --no-cache wget
+FROM nginx:alpine
 
 # Copiar archivos construidos desde el stage de build
-COPY --from=builder /app/dist ./dist
+COPY --from=builder /app/dist /usr/share/nginx/html
+
+# Copiar configuración de nginx
+COPY nginx.conf /etc/nginx/conf.d/default.conf
 
 # Exponer puerto
-EXPOSE 5173
+EXPOSE 80
 
-# Health check
-HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-  CMD wget --no-verbose --tries=1 --spider http://localhost:5173 || exit 1
-
-# Servir aplicación
-CMD ["serve", "-s", "dist", "-l", "5173"]
+# Nginx corre en foreground por defecto en la imagen de alpine
+CMD ["nginx", "-g", "daemon off;"]

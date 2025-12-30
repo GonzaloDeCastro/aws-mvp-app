@@ -18,116 +18,37 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v3
 
-      - name: Configure SSH
+      - name: Verify secrets
         run: |
-          set -e
-          mkdir -p ~/.ssh
-          chmod 700 ~/.ssh
+          if [ -z "${{ secrets.EC2_HOST }}" ]; then exit 1; fi
+          if [ -z "${{ secrets.EC2_USER }}" ]; then exit 1; fi
+          if [ -z "${{ secrets.EC2_SSH_KEY }}" ]; then exit 1; fi
 
-          # Verificar que los secrets estén configurados
-          if [ -z "${{ secrets.EC2_SSH_KEY }}" ]; then
-            echo "❌ Error: EC2_SSH_KEY secret no está configurado"
-            exit 1
-          fi
-
-          if [ -z "${{ secrets.EC2_HOST }}" ]; then
-            echo "❌ Error: EC2_HOST secret no está configurado"
-            exit 1
-          fi
-
-          # Escribir clave SSH
-          echo "${{ secrets.EC2_SSH_KEY }}" > ~/.ssh/deploy_key
-          chmod 600 ~/.ssh/deploy_key
-
-          # Agregar host a known_hosts
-          ssh-keyscan -H ${{ secrets.EC2_HOST }} >> ~/.ssh/known_hosts 2>/dev/null || true
-
-          echo "✅ SSH configurado correctamente"
-
-      - name: Test SSH Connection
-        run: |
-          echo "🔍 Probando conexión SSH..."
-          # Intentar con diferentes opciones de SSH
-          ssh -i ~/.ssh/deploy_key \
-            -o StrictHostKeyChecking=no \
-            -o ConnectTimeout=30 \
-            -o ServerAliveInterval=30 \
-            -o ServerAliveCountMax=10 \
-            -o TCPKeepAlive=yes \
-            -o BatchMode=yes \
-            -o LogLevel=ERROR \
-            ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} \
-            "echo '✅ Conexión SSH exitosa'" || {
-            echo "⚠️ Primera conexión falló, intentando diagnóstico..."
-            echo "Verificando clave SSH..."
-            ls -la ~/.ssh/deploy_key
-            file ~/.ssh/deploy_key
-            echo ""
-            echo "🔍 Verificando conectividad básica al puerto 22..."
-            timeout 10 bash -c "echo > /dev/tcp/${{ secrets.EC2_HOST }}/22" && echo "✅ Puerto 22 accesible" || echo "❌ Puerto 22 no accesible"
-            echo ""
-            echo "⚠️ Continuando con el despliegue de todas formas..."
-          }
-
-      - name: Copy files to EC2
-        run: |
-          rsync -avz --delete \
-            -e "ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no -o ConnectTimeout=30 -o ServerAliveInterval=60 -o ServerAliveCountMax=10" \
-            --exclude '.git' \
-            --exclude 'node_modules' \
-            --exclude 'backend/node_modules' \
-            --exclude 'frontend/node_modules' \
-            --exclude '.env' \
-            --exclude 'backend/.env.local' \
-            --exclude 'backend/.env.production' \
-            --exclude 'frontend/.env.local' \
-            --exclude '*.log' \
-            --exclude '*.pem' \
-            --exclude '*.key' \
-            ./ ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}:~/aws-mvp-app/
-
-      - name: Deploy on EC2
-        run: |
-          ssh -i ~/.ssh/deploy_key \
-            -o StrictHostKeyChecking=no \
-            -o ServerAliveInterval=30 \
-            -o ServerAliveCountMax=20 \
-            -o TCPKeepAlive=yes \
-            -o ConnectTimeout=30 \
-            -o BatchMode=yes \
-            ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} << 'EOF'
-            set -e
+      - name: Deploy to EC2
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          port: 22
+          script: |
+            # Crear directorio si no existe
+            mkdir -p ~/aws-mvp-app
             cd ~/aws-mvp-app
             
-            # Exportar variables de entorno para docker-compose
-            export VITE_API_BASE_URL=${{ secrets.VITE_API_BASE_URL }}
-            
-            # Construir y levantar servicios
-            # Usar 'docker compose' (plugin) en lugar de 'docker-compose' (standalone)
-            echo "📦 Construyendo imágenes Docker (esto puede tardar varios minutos)..."
-            docker compose -f docker-compose.prod.yml pull || true
-            docker compose -f docker-compose.prod.yml build --no-cache --progress=plain
-            
-            echo "▶️  Levantando servicios..."
-            docker compose -f docker-compose.prod.yml up -d
-            
-            # Limpiar imágenes antiguas
-            echo "🧹 Limpiando imágenes antiguas..."
-            docker image prune -f
-            
-            # Verificar que los servicios estén corriendo
-            echo "⏳ Esperando a que los servicios inicien..."
-            sleep 15
-            docker compose -f docker-compose.prod.yml ps
-            
-            echo "✅ Despliegue completado"
-          EOF
+            # Asegurar que estamos en la rama correcta
+            if [ -d ".git" ]; then
+              git fetch origin
+              git reset --hard origin/main
+            else
+              # Si es la primera vez, clonar (ajusta la URL del repo según corresponda)
+              # git clone <REPO_URL> .
+              echo "⚠️ El directorio existe pero no es un repo git. Por favor clona el repo primero en el servidor."
+              exit 1
+            fi
 
-      - name: Health Check
-        run: |
-          sleep 15
-          BACKEND_URL="${{ secrets.VITE_API_BASE_URL }}/health"
-          echo "Verificando health check en: $BACKEND_URL"
-          curl -f $BACKEND_URL || echo "⚠️ Health check falló, pero el despliegue continuó"
+            # Ejecutar script de despliegue
+            chmod +x deploy.sh
+            ./deploy.sh
