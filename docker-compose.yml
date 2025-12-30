@@ -1,6 +1,29 @@
 version: "3.8"
 
 services:
+  db:
+    image: mysql:8.0
+    container_name: aws-mvp-db
+    ports:
+      - "3308:3306"
+    environment:
+      - MYSQL_ROOT_PASSWORD=${DB_ROOT_PASSWORD:-rootpassword}
+      - MYSQL_DATABASE=${DB_NAME:-presuflow}
+      - MYSQL_USER=${DB_USER:-presuflow_user}
+      - MYSQL_PASSWORD=${DB_PASSWORD:-presuflow_password}
+    volumes:
+      - db-data:/var/lib/mysql
+      - ./db/init:/docker-entrypoint-initdb.d
+    restart: unless-stopped
+    networks:
+      - app-network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-prootpassword"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
   backend:
     build:
       context: ./backend
@@ -14,16 +37,19 @@ services:
       - DOCKER_CONTAINER=true
       - NODE_ENV=${NODE_ENV:-production}
       - PORT=${PORT:-3001}
-      - DB_HOST=${DB_HOST}
-      - DB_PORT=${DB_PORT:-3306}
+      - DB_HOST=db
+      - DB_PORT=3306
       - DB_USER=${DB_USER}
       - DB_PASSWORD=${DB_PASSWORD}
       - DB_NAME=${DB_NAME}
       - JWT_SECRET=${JWT_SECRET}
       - JWT_EXPIRES_IN=${JWT_EXPIRES_IN:-1d}
-      - DB_SSL=${DB_SSL:-true}
-      - DB_SSL_REJECT_UNAUTHORIZED=${DB_SSL_REJECT_UNAUTHORIZED:-false}
+      - DB_SSL=false
+      - DB_SSL_REJECT_UNAUTHORIZED=false
     restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
     networks:
       - app-network
     healthcheck:
@@ -73,3 +99,6 @@ services:
 networks:
   app-network:
     driver: bridge
+
+volumes:
+  db-data:

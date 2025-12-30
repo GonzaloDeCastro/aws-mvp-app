@@ -1,0 +1,4 @@
+# Este directorio contiene los scripts SQL de inicialización
+# Coloca tu dump.sql aquí y se ejecutará automáticamente al crear el contenedor por primera vez
+# Nota: Los scripts en este directorio solo se ejecutan si el volumen de datos está vacío
+
