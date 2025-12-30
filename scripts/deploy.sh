@@ -19,12 +19,13 @@ fi
 # Exportar variables de entorno
 export VITE_API_BASE_URL=${VITE_API_BASE_URL:-http://localhost:3001}
 
-# Construir y levantar servicios
-echo "🐳 Construyendo imágenes Docker..."
-docker-compose -f docker-compose.prod.yml build --no-cache
+# Detener contenedores existentes
+echo "🛑 Deteniendo contenedores..."
+docker-compose down || true
 
-echo "▶️  Levantando servicios..."
-docker-compose -f docker-compose.prod.yml up -d
+# Construir y levantar servicios
+echo "🔨 Construyendo y levantando..."
+docker-compose up -d --build
 
 # Limpiar imágenes antiguas
 echo "🧹 Limpiando imágenes antiguas..."
@@ -36,7 +37,7 @@ sleep 10
 
 # Verificar estado
 echo "📊 Estado de los servicios:"
-docker-compose -f docker-compose.prod.yml ps
+docker-compose ps
 
 # Health check
 echo "🏥 Verificando health check..."

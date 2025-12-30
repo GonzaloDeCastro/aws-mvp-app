@@ -38,15 +38,15 @@ fi
 
 # Detener contenedores viejos
 echo -e "${YELLOW}🛑 Deteniendo contenedores...${NC}"
-docker compose -f docker-compose.prod.yml down 2>/dev/null || true
+docker compose down 2>/dev/null || true
 
 # Construir y levantar
 echo -e "${YELLOW}🔨 Construyendo y levantando...${NC}"
-docker compose -f docker-compose.prod.yml up -d --build --remove-orphans
+docker compose up -d --build --remove-orphans
 docker system prune -f 
 
 echo -e "${YELLOW}⏳ Esperando servicios...${NC}"
 sleep 10
-docker compose -f docker-compose.prod.yml ps
+docker compose ps
 
 echo -e "${GREEN}✅ Despliegue completado!${NC}"
